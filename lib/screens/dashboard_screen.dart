@@ -10,25 +10,25 @@ class DashboardScreen extends StatefulWidget {
 }
 
 class _DashboardScreenState extends State<DashboardScreen> {
-  List<dynamic> _accounts = [];
-  bool _isFetchingAccounts = true;
+  List<dynamic> _journals = [];
+  bool _isFetchingJournals = true;
   String? _selectedProfile;
 
   @override
   Widget build(BuildContext context) {
     return MainLayout(
       appBar: CustomAppBar(
-        onAccountsChanged: (accounts) {
+        onJournalsChanged: (journals) {
           if (mounted) {
             setState(() {
-              _accounts = accounts;
+              _journals = journals;
             });
           }
         },
-        onFetchingAccountsChanged: (isFetching) {
+        onFetchingJournalsChanged: (isFetching) {
           if (mounted) {
             setState(() {
-              _isFetchingAccounts = isFetching;
+              _isFetchingJournals = isFetching;
             });
           }
         },
@@ -44,24 +44,34 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ? const Center(
               child: Text('Please select a profile to see the accounts.'),
             )
-          : _isFetchingAccounts
+          : _isFetchingJournals
               ? const Center(
                   child: CircularProgressIndicator(),
                 )
-              : _accounts.isEmpty
-                  ? const Center(
-                      child: Text('No accounts found for this profile.'),
+              : _journals.isEmpty
+                  ? Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: <Widget>[
+                          const Text('No journals yet.'),
+                          TextButton(
+                            child: const Text('You can init setting the cash'),
+                            onPressed: () {
+                              Navigator.pushNamed(
+                                  context, '/cash');
+                            },
+                          ),
+                        ],
+                      ),
                     )
                   : ListView.builder(
-                      itemCount: _accounts.length,
+                      itemCount: _journals.length,
                       itemBuilder: (context, index) {
-                        final account = _accounts[index];
+                        final account = _journals[index];
                         return ListTile(
-                          title: Text(account['name']),
-                          subtitle: Text(account['code']),
-                          trailing: Text(
-                            '${account['nature']} ${account['type']}',
-                          ),
+                          title: Text(account['descriptions']),
+                          subtitle: Text(account['details']),
+                          trailing: Text('date'),
                         );
                       },
                     ),

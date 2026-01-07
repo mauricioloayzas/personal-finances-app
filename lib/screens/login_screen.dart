@@ -1,8 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
-import 'package:flutter_dotenv/flutter_dotenv.dart'; // 1. Importar dotenv
-import 'package:flutter_secure_storage/flutter_secure_storage.dart'; // 2. Importar secure storage
+import '../services/api_service.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -15,12 +12,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   bool _isLoading = false;
-
-  // 3. Crear instancia del storage
-  final _storage = const FlutterSecureStorage();
-
-  // 4. Construir la URL usando la variable de entorno
-  final String _loginUrl = '${dotenv.env['API_ORCHESTRATOR_URL']}/auth/login';
+  final ApiService _apiService = ApiService();
 
   Future<void> _login() async {
     setState(() {
@@ -28,48 +20,17 @@ class _LoginScreenState extends State<LoginScreen> {
     });
 
     try {
-      final payload = {
-        'email': _emailController.text,
-        'password': _passwordController.text,
-      };
-
-      final response = await http.post(
-        Uri.parse(_loginUrl), // Usar la URL construida
-        headers: {'Content-Type': 'application/json; charset=UTF-8'},
-        body: json.encode(payload),
+      await _apiService.login(
+        _emailController.text,
+        _passwordController.text,
       );
 
-      if (response.statusCode == 200) {
-        // 5. Decodificar la respuesta
-        final Map<String, dynamic> responseData = json.decode(response.body);
-
-        final String? idToken = responseData['IdToken'];
-        final String? sub = responseData['sub'];
-
-        if (idToken != null && sub != null) {
-          // 7. Guardar el token de forma segura
-          await _storage.write(key: 'idToken', value: idToken);
-          await _storage.write(key: 'sub', value: sub);
-
-          if (mounted) {
-            Navigator.pushReplacementNamed(context, '/dashboard');
-          }
-        } else {
-          // El login fue exitoso (200) pero no vino el token
-          if (mounted) {
-            _showError('Respuesta inválida del servidor.');
-          }
-        }
-      } else {
-        // Error de credenciales (401, 403)
-        if (mounted) {
-          _showError('Email o contraseña incorrectos.');
-        }
+      if (mounted) {
+        Navigator.pushReplacementNamed(context, '/dashboard');
       }
     } catch (e) {
-      // Error de red
       if (mounted) {
-        _showError('Error de red: $e');
+        _showError(e.toString().replaceFirst('Exception: ', ''));
       }
     } finally {
       if (mounted) {
@@ -80,7 +41,6 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
-  // Función helper para mostrar errores
   void _showError(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -99,9 +59,6 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // El resto del widget (UI) sigue exactamente igual que antes...
-    // ... (El Scaffold, los TextFields, y los botones) ...
-    // ... No es necesario copiarlo aquí de nuevo ...
     return Scaffold(
       body: Center(
         child: Padding(

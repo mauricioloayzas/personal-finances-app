@@ -41,34 +41,34 @@ class CustomDrawer extends StatelessWidget {
           ),
           ListTile(
             leading: const Icon(Icons.money),
-            title: const Text('Efectivo'),
+            title: const Text('Cash'),
             onTap: () {
               // Navegar a Cuentas
-              Navigator.pop(context);
-            },
-          ),
-          ListTile(
-            leading: const Icon(Icons.monetization_on),
-            title: const Text('Bancos'),
-            onTap: () {
-              // Navegar a Configuración
-              Navigator.pop(context);
+              Navigator.pushNamed(context, '/cash');
             },
           ),
           ListTile(
             leading: const Icon(Icons.credit_card),
-            title: const Text('Tarjetas de crédito'),
+            title: const Text('Credit Cards Debts'),
             onTap: () {
               // Navegar a Configuración
-              Navigator.pop(context);
+              Navigator.pushNamed(context, '/cash');
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.credit_card),
+            title: const Text('Loan Debts'),
+            onTap: () {
+              // Navegar a Configuración
+              Navigator.pushNamed(context, '/cash');
             },
           ),
           ListTile(
             leading: const Icon(Icons.monetization_on_sharp),
-            title: const Text('Transacciones'),
+            title: const Text('Transactions'),
             onTap: () {
               // Navegar a Configuración
-              Navigator.pop(context);
+              Navigator.pushNamed(context, '/cash');
             },
           ),
           const Divider(),

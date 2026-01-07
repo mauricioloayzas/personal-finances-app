@@ -1,19 +1,15 @@
-import 'dart:convert';
-
 import 'package:flutter/material.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:http/http.dart' as http;
+import '../services/api_service.dart';
 
 class CustomAppBar extends StatefulWidget implements PreferredSizeWidget {
-  final ValueChanged<List<dynamic>> onAccountsChanged;
-  final ValueChanged<bool> onFetchingAccountsChanged;
+  final ValueChanged<List<dynamic>> onJournalsChanged;
+  final ValueChanged<bool> onFetchingJournalsChanged;
   final ValueChanged<String?> onSelectedProfileChanged;
 
   const CustomAppBar({
     super.key,
-    required this.onAccountsChanged,
-    required this.onFetchingAccountsChanged,
+    required this.onJournalsChanged,
+    required this.onFetchingJournalsChanged,
     required this.onSelectedProfileChanged,
   });
 
@@ -25,111 +21,47 @@ class CustomAppBar extends StatefulWidget implements PreferredSizeWidget {
 }
 
 class _CustomAppBarState extends State<CustomAppBar> {
-  final _storage = const FlutterSecureStorage();
+  final ApiService _apiService = ApiService();
   List<dynamic> _profiles = [];
   String? _selectedProfile;
   bool _isLoading = true;
-  List<dynamic> _accounts = [];
 
   @override
   void initState() {
     super.initState();
-    _fetchProfiles();
+    _loadProfiles();
   }
 
-  Future<void> _fetchProfiles() async {
+  Future<void> _loadProfiles() async {
     try {
-      final idToken = await _storage.read(key: 'idToken');
-      final sub = await _storage.read(key: 'sub');
-      final apiOrchestratorUrl = dotenv.env['API_ORCHESTRATOR_URL'];
-      final response = await http.get(
-        Uri.parse('$apiOrchestratorUrl/profiles/rbacs/by-user?user_id=$sub'),
-        headers: {
-          'Authorization': 'Bearer $idToken',
-        },
-      );
-
-      if (response.statusCode == 200) {
-        final List<dynamic> rbacs = jsonDecode(response.body);
-
-        final profileDetails = await Future.wait(
-          rbacs.map<Future<Map<String, dynamic>>>((rbac) {
-            return _fetchProfileDetails(rbac['profile_id'].toString());
-          }).toList(),
-        );
-        setState(() {
-          _profiles = profileDetails;
-          if (_profiles.isNotEmpty) {
-            _selectedProfile = _profiles.first['id'].toString();
-            widget.onSelectedProfileChanged(_selectedProfile);
-            _fetchAccounts(_selectedProfile!);
-          }
-          _isLoading = false;
-        });
-      } else {
-        setState(() {
-          _isLoading = false;
-        });
-
-        final errorMessages = jsonDecode(response.body);
-        _showError(errorMessages['message']);
-      }
+      final profiles = await _apiService.fetchProfiles();
+      setState(() {
+        _profiles = profiles;
+        if (_profiles.isNotEmpty) {
+          _selectedProfile = _profiles.first['id'].toString();
+          widget.onSelectedProfileChanged(_selectedProfile);
+          _loadJournals(_selectedProfile!);
+        }
+        _isLoading = false;
+      });
     } catch (e) {
       setState(() {
         _isLoading = false;
       });
-      _showError('Error de red: $e');
+      _showError(e.toString());
     }
   }
 
-  Future<Map<String, dynamic>> _fetchProfileDetails(String profileId) async {
-    final idToken = await _storage.read(key: 'idToken');
-    final apiOrchestratorUrl = dotenv.env['API_ORCHESTRATOR_URL'];
-    final response = await http.get(
-      Uri.parse('$apiOrchestratorUrl/profiles/$profileId'),
-      headers: {
-        'Authorization': 'Bearer $idToken',
-      },
-    );
-
-    if (response.statusCode == 200) {
-      return jsonDecode(response.body);
-    } else {
-      throw Exception('Failed to load profile details');
-    }
-  }
-
-  Future<void> _fetchAccounts(String profileId) async {
-    widget.onFetchingAccountsChanged(true);
-
+  Future<void> _loadJournals(String profileId) async {
+    widget.onFetchingJournalsChanged(true);
     try {
-      final idToken = await _storage.read(key: 'idToken');
-      final apiPFUrl = dotenv.env['API_PF_URL'];
-      final response = await http.get(
-        Uri.parse('$apiPFUrl/profiles/$profileId/accounts'),
-        headers: {
-          'Authorization': 'Bearer $idToken',
-        },
-      );
-
-      if (response.statusCode == 200) {
-        setState(() {
-          _accounts = jsonDecode(response.body);
-          widget.onAccountsChanged(_accounts);
-          widget.onFetchingAccountsChanged(false);
-        });
-      } else {
-        setState(() {
-          _accounts = [];
-          widget.onAccountsChanged([]);
-          widget.onFetchingAccountsChanged(false);
-        });
-        final errorMessages = jsonDecode(response.body);
-        _showError(errorMessages['message']);
-      }
+      final journals = await _apiService.fetchJournals(profileId);
+      widget.onJournalsChanged(journals);
     } catch (e) {
-      widget.onFetchingAccountsChanged(false);
-      _showError('Error de red: $e');
+      widget.onJournalsChanged([]);
+      _showError(e.toString());
+    } finally {
+      widget.onFetchingJournalsChanged(false);
     }
   }
 
@@ -138,18 +70,20 @@ class _CustomAppBarState extends State<CustomAppBar> {
       setState(() {
         _selectedProfile = newProfileId;
         widget.onSelectedProfileChanged(newProfileId);
-        _accounts = [];
-        widget.onAccountsChanged([]);
+        widget.onJournalsChanged([]);
       });
-      _fetchAccounts(newProfileId);
+      _loadJournals(newProfileId);
     }
   }
 
-  Future<void> _logout(BuildContext context) async {
-    await _storage.delete(key: 'idToken');
-    await _storage.delete(key: 'sub');
-    if (context.mounted) {
-      Navigator.pushReplacementNamed(context, '/login');
+  Future<void> _handleLogout(BuildContext context) async {
+    try {
+      await _apiService.logout();
+      if (context.mounted) {
+        Navigator.pushReplacementNamed(context, '/login');
+      }
+    } catch (e) {
+      _showError('Error during logout: ${e.toString()}');
     }
   }
 
@@ -157,7 +91,7 @@ class _CustomAppBarState extends State<CustomAppBar> {
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(message),
+          content: Text(message.replaceFirst('Exception: ', '')),
           backgroundColor: Colors.red,
           duration: const Duration(days: 365),
           action: SnackBarAction(
@@ -204,12 +138,12 @@ class _CustomAppBarState extends State<CustomAppBar> {
         IconButton(
           icon: const Icon(Icons.notifications),
           onPressed: () {
-            // Acción de notificaciones
+            // Notification action
           },
         ),
         IconButton(
           icon: const Icon(Icons.logout),
-          onPressed: () => _logout(context),
+          onPressed: () => _handleLogout(context),
         ),
       ],
     );
