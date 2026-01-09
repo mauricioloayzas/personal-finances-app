@@ -52,7 +52,7 @@ class CustomDrawer extends StatelessWidget {
             title: const Text('Credit Cards Debts'),
             onTap: () {
               // Navegar a Configuración
-              Navigator.pushNamed(context, '/cash');
+              Navigator.pushNamed(context, '/credit-card-debts');
             },
           ),
           ListTile(

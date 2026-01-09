@@ -7,15 +7,15 @@ import 'package:frontend/widgets/custom_app_bar.dart';
 import 'package:frontend/widgets/main_layout.dart';
 import '../services/api_service.dart';
 
-class CashScreen extends StatefulWidget {
-  const CashScreen({super.key});
+class CreditCardDebtsScreen extends StatefulWidget {
+  const CreditCardDebtsScreen({super.key});
 
   @override
-  State<CashScreen> createState() => _CashScreenState();
+  State<CreditCardDebtsScreen> createState() => _CreditCardDebtsScreenState();
 }
 
-class _CashScreenState extends State<CashScreen> {
-  final String _accountParentCode = "1.1.01.";
+class _CreditCardDebtsScreenState extends State<CreditCardDebtsScreen> {
+  final String _accountParentCode = "2.1.01.";
   final Utils _utils = Utils();
   final ApiService _apiService = ApiService();
   List<dynamic> _journals = [];

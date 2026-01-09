@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:frontend/screens/credit_card_debts_screen.dart';
 import 'package:frontend/screens/dashboard_screen.dart';
 import 'package:frontend/screens/cash_screen.dart';
 import 'package:frontend/screens/login_screen.dart';
@@ -33,6 +34,7 @@ class MyApp extends StatelessWidget {
         '/signup': (context) => const SignUpScreen(),
         '/dashboard': (context) => const DashboardScreen(),
         '/cash': (context) => const CashScreen(),
+        '/credit-card-debts': (context) => const CreditCardDebtsScreen(),
       },
     );
   }

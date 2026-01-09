@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:frontend/models/journal_entry.dart';
 import 'package:http/http.dart' as http;
 
 class ApiService {
@@ -81,8 +82,8 @@ class ApiService {
     }
   }
 
-  Future<List<dynamic>> fetchAccounts(String profileId,
-      String codeParent) async {
+  Future<List<dynamic>> fetchAccounts(
+      String profileId, String codeParent) async {
     if (profileId == "") {
       return [];
     }
@@ -108,7 +109,46 @@ class ApiService {
     }
   }
 
-  Future<Map<String, dynamic>> createAccount(String profileId, Map<String, dynamic> accountData) async {
+  Future<Map<String, dynamic>> getAccountProfileDetails(
+      String profileId, String accountId) async {
+    final idToken = await _storage.read(key: 'idToken');
+    final apiOrchestratorUrl = dotenv.env['API_ORCHESTRATOR_URL'];
+    final response = await http.get(
+      Uri.parse('$apiOrchestratorUrl/profiles/$profileId/accounts/$accountId'),
+      headers: {
+        'Authorization': 'Bearer $idToken',
+      },
+    );
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    } else {
+      throw Exception('Failed to load profile details');
+    }
+  }
+
+  Future<Map<String, dynamic>> getAccountProfileDetailsByCode(
+      String profileId, String accountCode) async {
+    final idToken = await _storage.read(key: 'idToken');
+    final apiOrchestratorUrl = dotenv.env['API_ORCHESTRATOR_URL'];
+    accountCode = accountCode.replaceAll(".", "-");
+    final response = await http.get(
+      Uri.parse(
+          '$apiOrchestratorUrl/profiles/$profileId/accounts-by-code/$accountCode'),
+      headers: {
+        'Authorization': 'Bearer $idToken',
+      },
+    );
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    } else {
+      throw Exception('Failed to load profile details');
+    }
+  }
+
+  Future<Map<String, dynamic>> createAccount(
+      String profileId, Map<String, dynamic> accountData) async {
     final idToken = await _storage.read(key: 'idToken');
     final apiPFUrl = dotenv.env['API_PF_URL'];
     final urlEndpoint = '$apiPFUrl/profiles/$profileId/accounts';
@@ -130,6 +170,29 @@ class ApiService {
     }
   }
 
+  Future<Map<String, dynamic>> editAccount(String profileId, String accountId,
+      Map<String, dynamic> accountData) async {
+    final idToken = await _storage.read(key: 'idToken');
+    final apiPFUrl = dotenv.env['API_PF_URL'];
+    final urlEndpoint = '$apiPFUrl/profiles/$profileId/accounts/$accountId';
+
+    final response = await http.patch(
+      Uri.parse(urlEndpoint),
+      headers: {
+        'Authorization': 'Bearer $idToken',
+        'Content-Type': 'application/json; charset=UTF-8',
+      },
+      body: json.encode(accountData),
+    );
+
+    if (response.statusCode == 201) {
+      return jsonDecode(response.body);
+    } else {
+      final errorBody = jsonDecode(response.body);
+      throw Exception(errorBody['message'] ?? 'Failed to edit account');
+    }
+  }
+
   Future<List<dynamic>> fetchJournals(String profileId) async {
     final idToken = await _storage.read(key: 'idToken');
     final apiPFUrl = dotenv.env['API_PF_URL'];
@@ -145,6 +208,33 @@ class ApiService {
     } else {
       final errorBody = jsonDecode(response.body);
       throw Exception(errorBody['message'] ?? 'Failed to load accounts');
+    }
+  }
+
+  Future<void> createJournalEntry(String profileId, String date,
+      String description, List<JournalEntry> entries) async {
+    final idToken = await _storage.read(key: 'idToken');
+    final apiPFUrl = dotenv.env['API_PF_URL'];
+    final urlEndpoint = '$apiPFUrl/profiles/$profileId/journal';
+
+    final payload = {
+      'date': date,
+      'description': description,
+      'entries': entries.map((e) => e.toJson()).toList(),
+    };
+
+    final response = await http.post(
+      Uri.parse(urlEndpoint),
+      headers: {
+        'Authorization': 'Bearer $idToken',
+        'Content-Type': 'application/json; charset=UTF-8',
+      },
+      body: json.encode(payload),
+    );
+
+    if (response.statusCode != 201) {
+      final errorBody = jsonDecode(response.body);
+      throw Exception(errorBody['message'] ?? 'Failed to create journal entry');
     }
   }
 }

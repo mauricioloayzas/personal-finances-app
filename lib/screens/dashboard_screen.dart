@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:frontend/core/enums.dart';
+import 'package:frontend/screens/accounts/create_account_screen.dart';
 import 'package:frontend/widgets/custom_app_bar.dart';
 import 'package:frontend/widgets/main_layout.dart';
 
@@ -64,17 +66,64 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         ],
                       ),
                     )
-                  : ListView.builder(
-                      itemCount: _journals.length,
-                      itemBuilder: (context, index) {
-                        final account = _journals[index];
-                        return ListTile(
-                          title: Text(account['descriptions']),
-                          subtitle: Text(account['details']),
-                          trailing: Text('date'),
-                        );
-                      },
-                    ),
+                  : Column(
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            const Text(
+                              'All your transactions',
+                              style: TextStyle(fontSize: 20),
+                            ),
+                            ElevatedButton(
+                              onPressed: () {
+                                if (_selectedProfile != null) {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => CreateAccountScreen(
+                                        profileId: _selectedProfile!,
+                                        code: "1.01.01.010",
+                                        accountType: AccountType.asset.name,
+                                        accountNature: AccountNature.debit.name,
+                                        isFinal: true,
+                                      ),
+                                    ),
+                                  ).then((_) {
+                                    if (_selectedProfile != null) {
+                                      
+                                    }
+                                  });
+                                } else {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                        content:
+                                            Text('Please select a profile first.')),
+                                  );
+                                }
+                              },
+                              child: const Text('Add'),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Expanded(
+                        child: ListView.builder(
+                          itemCount: _journals.length,
+                          itemBuilder: (context, index) {
+                            final account = _journals[index];
+                            return ListTile(
+                              title: Text(account['description']),
+                              subtitle: Text(account['date']),
+                              trailing: Text(account['date']),
+                            );
+                          },
+                        ),
+                      )
+                    ],
+                  ),
     );
   }
 }
