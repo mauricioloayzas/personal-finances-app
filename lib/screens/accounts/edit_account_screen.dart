@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:frontend/core/enums.dart';
 import 'package:frontend/models/journal_entry.dart';
 import 'package:frontend/services/api_service.dart';
 import 'package:frontend/widgets/custom_app_bar.dart';
@@ -28,6 +29,7 @@ class _EditAccountScreenState extends State<EditAccountScreen> {
   final String _intialAccount = "3.1.01";
   final String _adjustAccount = "3.1.02";
   final _apiService = ApiService();
+  String _accountNature = AccountNature.debit.name;
   bool _isCreating = false;
   bool _isLoading = true;
   bool _isBalanceFieldVisible = false; // Estado para controlar la visibilidad
@@ -76,6 +78,7 @@ class _EditAccountScreenState extends State<EditAccountScreen> {
         _balanceValueController.text = details['balance']?.toString() ?? '0';
         _newBalanceValueController.text = '0';
         _currentBalance = num.tryParse(_balanceValueController.text) ?? 0;
+        _accountNature = details['nature'];
 
         // Condición para mostrar el campo de balance
         if (_currentBalance != 0) {
@@ -107,60 +110,67 @@ class _EditAccountScreenState extends State<EditAccountScreen> {
       };
 
       // 1. Actualización básica
-      await _apiService.editAccount(widget.profileId, widget.accountId, accountData);
+      await _apiService.editAccount(
+          widget.profileId, widget.accountId, accountData);
       print("Paso 1: Cuenta actualizada en DynamoDB");
 
       if (!mounted) return;
 
       // 2. Parseo de valores con seguridad
-      num newBalance = num.tryParse(_balanceValueController.text) ?? 0;
-      num adjustValue = num.tryParse(_newBalanceValueController.text) ?? 0;
-      
+      num journalValue = 0;
+      if (num.tryParse(_newBalanceValueController.text) != 0) {
+        journalValue = num.tryParse(_newBalanceValueController.text) ?? 0;
+      } else {
+        journalValue = num.tryParse(_balanceValueController.text) ?? 0;
+      }
+
       bool shouldCreateJournal = false;
       String descriptionJournal = "";
       String? targetCapitalCode;
 
       // Determinar qué cuenta de capital usar según tu plan de cuentas [cite: 1, 3]
-      if (_currentBalance == 0 && newBalance > 0) {
+      if (_currentBalance == 0 && journalValue > 0) {
         shouldCreateJournal = true;
         descriptionJournal = "Saldo inicial: ${accountData['name']}";
-        targetCapitalCode = _intialAccount; // 3.1.01 
-      } else if (_currentBalance > 0 && adjustValue != 0) {
+        targetCapitalCode = _intialAccount; // 3.1.01
+      } else if (_currentBalance > 0 && journalValue != 0) {
         shouldCreateJournal = true;
         descriptionJournal = "Ajuste de saldo: ${accountData['name']}";
         targetCapitalCode = _adjustAccount; // 3.1.02
-        newBalance = adjustValue; // El monto del asiento es el valor del ajuste
       }
 
       // 3. Lógica Contable
       if (shouldCreateJournal && targetCapitalCode != null) {
         print("Paso 2: Buscando cuenta de capital $targetCapitalCode");
-        
+
         final accountCapital = await _apiService.getAccountProfileDetailsByCode(
             widget.profileId, targetCapitalCode);
 
         if (accountCapital != null && accountCapital.containsKey('id')) {
           print("Paso 3: Creando registro en Diario General");
-          
-          // Decidir dirección del asiento según signo [cite: 1, 4]
-          if (newBalance < 0) {
-            await _createJournalRegister(
-                accountCapital['id'], 
-                widget.accountId, 
-                newBalance.abs(), 
-                descriptionJournal
-            );
+          print(
+              'Paso 3.1: ${AccountNature.debit.name} $_accountNature $journalValue');
+
+          if (_accountNature == AccountNature.debit.name) {
+            if (journalValue < 0) {
+              await _createJournalRegister(accountCapital['id'],
+                  widget.accountId, journalValue.abs(), descriptionJournal);
+            } else {
+              await _createJournalRegister(widget.accountId,
+                  accountCapital['id'], journalValue.abs(), descriptionJournal);
+            }
           } else {
-            // Si es positivo, entra a banco (Débito) y sale de capital (Crédito) [cite: 1]
-            await _createJournalRegister(
-                widget.accountId, 
-                accountCapital['id'], 
-                newBalance.abs(), 
-                descriptionJournal
-            );
+            if (journalValue < 0) {
+              await _createJournalRegister(widget.accountId,
+                  accountCapital['id'], journalValue.abs(), descriptionJournal);
+            } else {
+              await _createJournalRegister(accountCapital['id'],
+                  widget.accountId, journalValue.abs(), descriptionJournal);
+            }
           }
         } else {
-          print("Error: No se encontró la cuenta de capital con código $targetCapitalCode");
+          print(
+              "Error: No se encontró la cuenta de capital con código $targetCapitalCode");
         }
       }
 

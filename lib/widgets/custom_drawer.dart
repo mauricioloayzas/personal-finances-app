@@ -56,11 +56,11 @@ class CustomDrawer extends StatelessWidget {
             },
           ),
           ListTile(
-            leading: const Icon(Icons.credit_card),
+            leading: const Icon(Icons.house),
             title: const Text('Loan Debts'),
             onTap: () {
               // Navegar a Configuración
-              Navigator.pushNamed(context, '/cash');
+              Navigator.pushNamed(context, '/loan-debts');
             },
           ),
           ListTile(

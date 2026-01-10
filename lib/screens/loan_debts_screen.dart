@@ -7,15 +7,15 @@ import 'package:frontend/widgets/custom_app_bar.dart';
 import 'package:frontend/widgets/main_layout.dart';
 import '../services/api_service.dart';
 
-class CreditCardDebtsScreen extends StatefulWidget {
-  const CreditCardDebtsScreen({super.key});
+class LoanDebtsScreen extends StatefulWidget {
+  const LoanDebtsScreen({super.key});
 
   @override
-  State<CreditCardDebtsScreen> createState() => _CreditCardDebtsScreenState();
+  State<LoanDebtsScreen> createState() => _LoanDebtsScreenState();
 }
 
-class _CreditCardDebtsScreenState extends State<CreditCardDebtsScreen> {
-  final String _accountParentCode = "2.1.01.";
+class _LoanDebtsScreenState extends State<LoanDebtsScreen> {
+  final String _accountParentCode = "2.1.02.";
   final Utils _utils = Utils();
   final ApiService _apiService = ApiService();
   List<dynamic> _journals = [];
@@ -80,7 +80,7 @@ class _CreditCardDebtsScreenState extends State<CreditCardDebtsScreen> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       const Text(
-                        'All your credit card debts',
+                        'All your loan debts',
                         style: TextStyle(fontSize: 20),
                       ),
                       ElevatedButton(

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:frontend/screens/credit_card_debts_screen.dart';
 import 'package:frontend/screens/dashboard_screen.dart';
 import 'package:frontend/screens/cash_screen.dart';
+import 'package:frontend/screens/loan_debts_screen.dart';
 import 'package:frontend/screens/login_screen.dart';
 import 'package:frontend/screens/signup_screen.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
@@ -35,6 +36,7 @@ class MyApp extends StatelessWidget {
         '/dashboard': (context) => const DashboardScreen(),
         '/cash': (context) => const CashScreen(),
         '/credit-card-debts': (context) => const CreditCardDebtsScreen(),
+        '/loan-debts': (context) => const LoanDebtsScreen(),
       },
     );
   }
