@@ -123,13 +123,15 @@ class _EditAccountScreenState extends State<EditAccountScreen> {
       } else {
         journalValue = num.tryParse(_balanceValueController.text) ?? 0;
       }
+      print(
+              'Paso 1.1: ${AccountNature.debit.name} $_currentBalance $journalValue');
 
       bool shouldCreateJournal = false;
       String descriptionJournal = "";
       String? targetCapitalCode;
 
       // Determinar qué cuenta de capital usar según tu plan de cuentas [cite: 1, 3]
-      if (_currentBalance == 0 && journalValue > 0) {
+      if (_currentBalance == 0 && journalValue != 0) {
         shouldCreateJournal = true;
         descriptionJournal = "Saldo inicial: ${accountData['name']}";
         targetCapitalCode = _intialAccount; // 3.1.01
@@ -248,17 +250,55 @@ class _EditAccountScreenState extends State<EditAccountScreen> {
   }
 
   Widget _buildTextField(TextEditingController controller, String label,
-      {bool isNumber = false, bool enabledField = true}) {
+    {bool isNumber = false, bool enabledField = true}) {
+  
+    // 1. Intentamos parsear. Si no es un número, doubleValue será null.
+    final doubleValue = num.tryParse(controller.text);
+    
+    // 2. Definimos el color como opcional (Color?)
+    Color? dynamicColor;
+
+    // 3. Solo aplicamos la lógica de color si es un campo numérico Y el valor es un número válido
+    if (isNumber && doubleValue != null) {
+      dynamicColor = doubleValue > 0 ? Colors.blue : Colors.red;
+    }
+
     return TextFormField(
       enabled: enabledField,
       controller: controller,
+      // style controla el color del texto escrito
+      style: TextStyle(color: dynamicColor), 
       keyboardType: isNumber ? TextInputType.number : TextInputType.text,
       decoration: InputDecoration(
         labelText: label,
+        // labelStyle controla el color del texto de la etiqueta
+        labelStyle: TextStyle(color: dynamicColor),
+        
+        // Bordes con lógica de "fallback" (si es null, usa un color neutro o el del tema)
+        enabledBorder: OutlineInputBorder(
+          borderSide: BorderSide(
+            color: dynamicColor ?? Colors.grey.shade400, // Color por defecto si no es número
+          ),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderSide: BorderSide(
+            color: dynamicColor ?? Theme.of(context).primaryColor, // Color del tema si no es número
+            width: 2.0,
+          ),
+        ),
+        disabledBorder: OutlineInputBorder(
+          borderSide: BorderSide(
+            color: (dynamicColor ?? Colors.grey).withOpacity(0.5),
+          ),
+        ),
         border: const OutlineInputBorder(),
       ),
       validator: (value) =>
           (value == null || value.isEmpty) ? 'Required field' : null,
+      onChanged: (val) {
+        // Forzamos el redibujado para que el color cambie mientras el usuario escribe
+        if (isNumber) setState(() {}); 
+      },
     );
   }
 }
