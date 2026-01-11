@@ -101,86 +101,32 @@ class _EditAccountScreenState extends State<EditAccountScreen> {
     if (!_formKey.currentState!.validate()) return;
 
     setState(() => _isCreating = true);
-    print("Iniciando actualización de cuenta...");
 
     try {
-      final accountData = {
-        'name': _nameController.text,
-        'description': _descriptionController.text,
-      };
-
-      // 1. Actualización básica
-      await _apiService.editAccount(
-          widget.profileId, widget.accountId, accountData);
-      print("Paso 1: Cuenta actualizada en DynamoDB");
-
-      if (!mounted) return;
-
-      // 2. Parseo de valores con seguridad
       num journalValue = 0;
       if (num.tryParse(_newBalanceValueController.text) != 0) {
         journalValue = num.tryParse(_newBalanceValueController.text) ?? 0;
       } else {
         journalValue = num.tryParse(_balanceValueController.text) ?? 0;
       }
-      print(
-              'Paso 1.1: ${AccountNature.debit.name} $_currentBalance $journalValue');
 
-      bool shouldCreateJournal = false;
-      String descriptionJournal = "";
-      String? targetCapitalCode;
+      final accountData = {
+        'name': _nameController.text,
+        'description': _descriptionController.text,
+        'journal_value': journalValue
+      };
 
-      // Determinar qué cuenta de capital usar según tu plan de cuentas [cite: 1, 3]
-      if (_currentBalance == 0 && journalValue != 0) {
-        shouldCreateJournal = true;
-        descriptionJournal = "Saldo inicial: ${accountData['name']}";
-        targetCapitalCode = _intialAccount; // 3.1.01
-      } else if (_currentBalance > 0 && journalValue != 0) {
-        shouldCreateJournal = true;
-        descriptionJournal = "Ajuste de saldo: ${accountData['name']}";
-        targetCapitalCode = _adjustAccount; // 3.1.02
-      }
-
-      // 3. Lógica Contable
-      if (shouldCreateJournal && targetCapitalCode != null) {
-        print("Paso 2: Buscando cuenta de capital $targetCapitalCode");
-
-        final accountCapital = await _apiService.getAccountProfileDetailsByCode(
-            widget.profileId, targetCapitalCode);
-
-        if (accountCapital != null && accountCapital.containsKey('id')) {
-          print("Paso 3: Creando registro en Diario General");
-          print(
-              'Paso 3.1: ${AccountNature.debit.name} $_accountNature $journalValue');
-
-          if (_accountNature == AccountNature.debit.name) {
-            if (journalValue < 0) {
-              await _createJournalRegister(accountCapital['id'],
-                  widget.accountId, journalValue.abs(), descriptionJournal);
-            } else {
-              await _createJournalRegister(widget.accountId,
-                  accountCapital['id'], journalValue.abs(), descriptionJournal);
-            }
-          } else {
-            if (journalValue < 0) {
-              await _createJournalRegister(widget.accountId,
-                  accountCapital['id'], journalValue.abs(), descriptionJournal);
-            } else {
-              await _createJournalRegister(accountCapital['id'],
-                  widget.accountId, journalValue.abs(), descriptionJournal);
-            }
-          }
-        } else {
-          print(
-              "Error: No se encontró la cuenta de capital con código $targetCapitalCode");
-        }
-      }
+      await _apiService.editAccount(
+          widget.profileId, widget.accountId, accountData);
+      print("uenta actualizada en DynamoDB");
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Proceso completado con éxito')),
         );
         Navigator.pop(context);
+      } else {
+        return;
       }
     } catch (e) {
       print("ERROR detectado: $e");
@@ -250,11 +196,10 @@ class _EditAccountScreenState extends State<EditAccountScreen> {
   }
 
   Widget _buildTextField(TextEditingController controller, String label,
-    {bool isNumber = false, bool enabledField = true}) {
-  
+      {bool isNumber = false, bool enabledField = true}) {
     // 1. Intentamos parsear. Si no es un número, doubleValue será null.
     final doubleValue = num.tryParse(controller.text);
-    
+
     // 2. Definimos el color como opcional (Color?)
     Color? dynamicColor;
 
@@ -267,22 +212,25 @@ class _EditAccountScreenState extends State<EditAccountScreen> {
       enabled: enabledField,
       controller: controller,
       // style controla el color del texto escrito
-      style: TextStyle(color: dynamicColor), 
+      style: TextStyle(color: dynamicColor),
       keyboardType: isNumber ? TextInputType.number : TextInputType.text,
       decoration: InputDecoration(
         labelText: label,
         // labelStyle controla el color del texto de la etiqueta
         labelStyle: TextStyle(color: dynamicColor),
-        
+
         // Bordes con lógica de "fallback" (si es null, usa un color neutro o el del tema)
         enabledBorder: OutlineInputBorder(
           borderSide: BorderSide(
-            color: dynamicColor ?? Colors.grey.shade400, // Color por defecto si no es número
+            color: dynamicColor ??
+                Colors.grey.shade400, // Color por defecto si no es número
           ),
         ),
         focusedBorder: OutlineInputBorder(
           borderSide: BorderSide(
-            color: dynamicColor ?? Theme.of(context).primaryColor, // Color del tema si no es número
+            color: dynamicColor ??
+                Theme.of(context)
+                    .primaryColor, // Color del tema si no es número
             width: 2.0,
           ),
         ),
@@ -297,7 +245,7 @@ class _EditAccountScreenState extends State<EditAccountScreen> {
           (value == null || value.isEmpty) ? 'Required field' : null,
       onChanged: (val) {
         // Forzamos el redibujado para que el color cambie mientras el usuario escribe
-        if (isNumber) setState(() {}); 
+        if (isNumber) setState(() {});
       },
     );
   }
