@@ -5,6 +5,7 @@ import 'package:frontend/screens/accounts/edit_account_screen.dart';
 import 'package:frontend/services/utils_functions.dart';
 import 'package:frontend/widgets/custom_app_bar.dart';
 import 'package:frontend/widgets/main_layout.dart';
+import 'package:intl/intl.dart';
 import '../services/api_service.dart';
 
 class CreditCardDebtsScreen extends StatefulWidget {
@@ -18,50 +19,50 @@ class _CreditCardDebtsScreenState extends State<CreditCardDebtsScreen> {
   final String _accountParentCode = "2.1.01.";
   final Utils _utils = Utils();
   final ApiService _apiService = ApiService();
-  List<dynamic> _journals = [];
-  bool _isFetchingJournals = true;
   String? _selectedProfile;
+  List<dynamic> _accounts = [];
+  bool _isLoading = true;
 
-  List<dynamic> _money = [];
+  @override
+  void initState() {
+    super.initState();
+  }
 
-  Future<void> _getAccountsMoney(String profile) async {
-    final money = await _apiService.fetchAccounts(profile, _accountParentCode);
+  Future<void> _getAccounts(String profile) async {
+    setState(() {
+      _isLoading = true;
+    });
+    final accounts = await _apiService.fetchAccounts(profile, _accountParentCode);
     if (mounted) {
       setState(() {
-        _money = money;
+        _accounts = accounts;
+        _isLoading = false;
       });
     }
+  }
+
+  String _formatCurrency(dynamic value) {
+    final number = num.tryParse(value.toString()) ?? 0;
+    return NumberFormat.currency(symbol: '\$', decimalDigits: 2).format(number);
   }
 
   @override
   Widget build(BuildContext context) {
     return MainLayout(
       appBar: CustomAppBar(
-        onJournalsChanged: (journals) {
-          if (mounted) {
-            setState(() {
-              _journals = journals;
-            });
-          }
-        },
-        onFetchingJournalsChanged: (isFetching) {
-          if (mounted) {
-            setState(() {
-              _isFetchingJournals = isFetching;
-            });
-          }
-        },
+        onJournalsChanged: (journals) {},
+        onFetchingJournalsChanged: (isFetching) {},
         onSelectedProfileChanged: (profileId) {
           if (mounted) {
             setState(() {
               _selectedProfile = profileId;
             });
             if (profileId != null) {
-              _getAccountsMoney(profileId);
+              _getAccounts(profileId);
             } else {
               if (mounted) {
                 setState(() {
-                  _money = [];
+                  _accounts = [];
                 });
               }
             }
@@ -70,91 +71,127 @@ class _CreditCardDebtsScreenState extends State<CreditCardDebtsScreen> {
       ),
       child: _selectedProfile == null
           ? const Center(
-              child: Text('Please select a profile to see the jorunals.'),
+              child: Text('Please select a profile to see the accounts.'),
             )
-          : Column(
-              children: [
-                Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text(
-                        'All your credit card debts',
-                        style: TextStyle(fontSize: 20),
-                      ),
-                      ElevatedButton(
-                        onPressed: () {
-                          if (_selectedProfile != null) {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => CreateAccountScreen(
-                                  profileId: _selectedProfile!,
-                                  code: _utils.getTheNextSequenceCode(_accountParentCode, _money),
-                                  accountType: AccountType.liability.name,
-                                  accountNature: AccountNature.credit.name,
-                                  isFinal: true,
-                                ),
-                              ),
-                            ).then((_) {
+          : _isLoading
+              ? const Center(
+                  child: CircularProgressIndicator(),
+                )
+              : Column(
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Text(
+                            'All your credit card debts',
+                            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                          ),
+                          ElevatedButton.icon(
+                            icon: const Icon(Icons.add),
+                            onPressed: () {
                               if (_selectedProfile != null) {
-                                _getAccountsMoney(_selectedProfile!);
-                              }
-                            });
-                          } else {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                  content:
-                                      Text('Please select a profile first.')),
-                            );
-                          }
-                        },
-                        child: const Text('Add'),
-                      ),
-                    ],
-                  ),
-                ),
-                Expanded(
-                  child: ListView.builder(
-                    itemCount: _money.length,
-                    itemBuilder: (context, index) {
-                      final account = _money[index];
-                      return ListTile(
-                        title: Text(account['name']),
-                        subtitle: Text(account['description']),
-                        trailing: TextButton(
-                          child: const Text('Edit'),
-                          onPressed: () {
-                            if (_selectedProfile != null) {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => EditAccountScreen(
-                                    profileId: _selectedProfile!,
-                                    accountId: account['id'],
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => CreateAccountScreen(
+                                      profileId: _selectedProfile!,
+                                      code: _utils.getTheNextSequenceCode(_accountParentCode, _accounts),
+                                      accountType: AccountType.liability.name,
+                                      accountNature: AccountNature.credit.name,
+                                      isFinal: true,
+                                    ),
                                   ),
-                                ),
-                              ).then((_) {
-                                if (_selectedProfile != null) {
-                                  _getAccountsMoney(_selectedProfile!);
-                                }
-                              });
-                            } else {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                    content:
-                                        Text('Please select a profile first.')),
-                              );
-                            }
-                          },
-                        ),
-                      );
-                    },
-                  ),
+                                ).then((_) {
+                                  if (_selectedProfile != null) {
+                                    _getAccounts(_selectedProfile!);
+                                  }
+                                });
+                              } else {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                      content:
+                                          Text('Please select a profile first.')),
+                                );
+                              }
+                            },
+                            label: const Text('Add'),
+                          ),
+                        ],
+                      ),
+                    ),
+                    _accounts.isEmpty
+                        ? const Center(child: Text('No accounts yet.'))
+                        : Expanded(
+                            child: ListView.builder(
+                              itemCount: _accounts.length,
+                              itemBuilder: (context, index) {
+                                final account = _accounts[index];
+                                final balance = num.tryParse(account['balance'].toString()) ?? 0;
+
+                                return Card(
+                                  margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                  child: ListTile(
+                                    leading: CircleAvatar(
+                                      backgroundColor: balance >= 0 ? Colors.blue.shade100 : Colors.red.shade100,
+                                      child: Icon(
+                                        balance >= 0 ? Icons.credit_card : Icons.credit_card_off,
+                                        color: balance >= 0 ? Colors.blue : Colors.red,
+                                      ),
+                                    ),
+                                    title: Text(
+                                      account['name'],
+                                      style: const TextStyle(fontWeight: FontWeight.bold),
+                                    ),
+                                    subtitle: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(account['description']),
+                                        const SizedBox(height: 5),
+                                        Text(
+                                          'Balance: ${_formatCurrency(balance)}',
+                                          style: TextStyle(
+                                            fontSize: 15,
+                                            fontWeight: FontWeight.w600,
+                                            color: balance >= 0 ? Colors.blue.shade700 : Colors.red.shade700,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    trailing: TextButton(
+                                      child: const Text('Edit'),
+                                      onPressed: () {
+                                        if (_selectedProfile != null) {
+                                          Navigator.push(
+                                            context,
+                                            MaterialPageRoute(
+                                              builder: (context) => EditAccountScreen(
+                                                profileId: _selectedProfile!,
+                                                accountId: account['id'],
+                                              ),
+                                            ),
+                                          ).then((_) {
+                                            if (_selectedProfile != null) {
+                                              _getAccounts(_selectedProfile!);
+                                            }
+                                          });
+                                        } else {
+                                          ScaffoldMessenger.of(context).showSnackBar(
+                                            const SnackBar(
+                                                content: Text(
+                                                    'Please select a profile first.')),
+                                          );
+                                        }
+                                      },
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
+                          ),
+                  ],
                 ),
-              ],
-            ),
     );
   }
 }
