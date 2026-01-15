@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:frontend/screens/list_accounts_screen.dart';
 
 class CustomDrawer extends StatelessWidget {
   final _storage = const FlutterSecureStorage();
@@ -43,24 +44,60 @@ class CustomDrawer extends StatelessWidget {
             leading: const Icon(Icons.money),
             title: const Text('Cash'),
             onTap: () {
-              // Navegar a Cuentas
-              Navigator.pushNamed(context, '/cash');
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const ListAccountsScreen(
+                    accountParentCode: "1.1.01.",
+                    isOnlyParent: false,
+                    isOnlyFinal: true,
+                  )
+                )
+              );
             },
           ),
           ListTile(
             leading: const Icon(Icons.credit_card),
             title: const Text('Credit Cards Debts'),
             onTap: () {
-              // Navegar a Configuración
-              Navigator.pushNamed(context, '/credit-card-debts');
+              Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (context) => const ListAccountsScreen(
+                            accountParentCode: "2.1.01.",
+                            isOnlyParent: false,
+                            isOnlyFinal: true,
+                          )));
             },
           ),
           ListTile(
             leading: const Icon(Icons.house),
             title: const Text('Loan Debts'),
             onTap: () {
-              // Navegar a Configuración
-              Navigator.pushNamed(context, '/loan-debts');
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                    builder: (context) => const ListAccountsScreen(
+                          accountParentCode: "2.1.02.",
+                          isOnlyParent: false,
+                          isOnlyFinal: true,
+                        )),
+              );
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.account_balance),
+            title: const Text('Incomes'),
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                    builder: (context) => const ListAccountsScreen(
+                          accountParentCode: "4.",
+                          isOnlyParent: true,
+                          isOnlyFinal: false,
+                        )),
+              );
             },
           ),
           ListTile(

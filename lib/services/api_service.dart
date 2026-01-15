@@ -82,20 +82,30 @@ class ApiService {
     }
   }
 
-  Future<List<dynamic>> fetchAccounts(
-      String profileId, String codeParent) async {
-    if (profileId == "") {
+  Future<List<dynamic>> fetchAccounts(String profileId, String? codeParent,
+      {bool isOnlyParent = false, bool isOnlyFinal = false}) async {
+    if (profileId.isEmpty) {
       return [];
     }
     final idToken = await _storage.read(key: 'idToken');
     final apiPFUrl = dotenv.env['API_PF_URL'];
-    var urlEndpoint = '$apiPFUrl/profiles/$profileId/accounts';
-    if (codeParent != "") {
-      urlEndpoint += "?code_parent=$codeParent";
+    final Map<String, String> queryParameters = {};
+
+    if (codeParent != null && codeParent.isNotEmpty) {
+      queryParameters['code_parent'] = codeParent;
+    }
+    if (isOnlyParent) {
+      queryParameters['only_parent'] = 'true';
+    }
+    if (isOnlyFinal) {
+      queryParameters['only_final'] = 'true';
     }
 
+    final uri = Uri.parse('$apiPFUrl/profiles/$profileId/accounts').replace(
+        queryParameters: queryParameters.isEmpty ? null : queryParameters);
+
     final response = await http.get(
-      Uri.parse(urlEndpoint),
+      uri,
       headers: {
         'Authorization': 'Bearer $idToken',
       },

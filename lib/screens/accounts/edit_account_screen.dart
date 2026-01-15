@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:frontend/core/enums.dart';
-import 'package:frontend/models/journal_entry.dart';
 import 'package:frontend/services/api_service.dart';
 import 'package:frontend/widgets/custom_app_bar.dart';
 import 'package:frontend/widgets/main_layout.dart';
@@ -26,10 +24,7 @@ class _EditAccountScreenState extends State<EditAccountScreen> {
   final _balanceValueController = TextEditingController();
   final _newBalanceValueController = TextEditingController();
   num _currentBalance = 0;
-  final String _intialAccount = "3.1.01";
-  final String _adjustAccount = "3.1.02";
   final _apiService = ApiService();
-  String _accountNature = AccountNature.debit.name;
   bool _isCreating = false;
   bool _isLoading = true;
   bool _isBalanceFieldVisible = false; // Estado para controlar la visibilidad
@@ -49,24 +44,6 @@ class _EditAccountScreenState extends State<EditAccountScreen> {
     super.dispose();
   }
 
-  Future<void> _createJournalRegister(
-    String debitAccountId,
-    String creditAccountId,
-    num registerValue,
-    String description,
-  ) async {
-    List<JournalEntry> entryData = [];
-    JournalEntry entryDebit = JournalEntry(
-        accountId: debitAccountId, debitValue: registerValue, creditValue: 0);
-    JournalEntry entryCredit = JournalEntry(
-        accountId: creditAccountId, debitValue: 0, creditValue: registerValue);
-    entryData.add(entryDebit);
-    entryData.add(entryCredit);
-
-    final journal = await _apiService.createJournalEntry(widget.profileId,
-        DateTime.now().toIso8601String(), description, entryData);
-  }
-
   Future<void> _loadAccountData() async {
     try {
       final details = await _apiService.getAccountProfileDetails(
@@ -78,7 +55,6 @@ class _EditAccountScreenState extends State<EditAccountScreen> {
         _balanceValueController.text = details['balance']?.toString() ?? '0';
         _newBalanceValueController.text = '0';
         _currentBalance = num.tryParse(_balanceValueController.text) ?? 0;
-        _accountNature = details['nature'];
 
         // Condición para mostrar el campo de balance
         if (_currentBalance != 0) {
@@ -118,7 +94,6 @@ class _EditAccountScreenState extends State<EditAccountScreen> {
 
       await _apiService.editAccount(
           widget.profileId, widget.accountId, accountData);
-      print("uenta actualizada en DynamoDB");
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -129,7 +104,6 @@ class _EditAccountScreenState extends State<EditAccountScreen> {
         return;
       }
     } catch (e) {
-      print("ERROR detectado: $e");
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Error en la operación: $e')),

@@ -11,7 +11,7 @@ class Utils {
     if (next.length < lastNumberFormatExample.length) {
       int diff = lastNumberFormatExample.length - next.length;
       for (int i = 0; i < diff; i++) {
-        next = "0" + next;
+        next = "0$next";
       }
     }
 
