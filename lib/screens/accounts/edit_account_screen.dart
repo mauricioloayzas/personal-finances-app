@@ -27,7 +27,9 @@ class _EditAccountScreenState extends State<EditAccountScreen> {
   final _apiService = ApiService();
   bool _isCreating = false;
   bool _isLoading = true;
-  bool _isBalanceFieldVisible = false; // Estado para controlar la visibilidad
+  bool _isBalanceFieldVisible = false;
+  bool _canBeAdjusted = false;
+  bool _canBePaid = false;
 
   @override
   void initState() {
@@ -56,10 +58,12 @@ class _EditAccountScreenState extends State<EditAccountScreen> {
         _newBalanceValueController.text = '0';
         _currentBalance = num.tryParse(_balanceValueController.text) ?? 0;
 
-        // Condición para mostrar el campo de balance
         if (_currentBalance != 0) {
           _isBalanceFieldVisible = true;
         }
+
+        _canBePaid = details.containsKey('can_be_paid') ? true : false;
+        _canBeAdjusted = details.containsKey('can_be_adjusted') ? true : false;
 
         _isLoading = false;
       });
@@ -145,7 +149,7 @@ class _EditAccountScreenState extends State<EditAccountScreen> {
                           enabledField: !_isBalanceFieldVisible),
                       const SizedBox(height: 20),
                       Visibility(
-                        visible: _isBalanceFieldVisible,
+                        visible: _isBalanceFieldVisible && _canBeAdjusted,
                         child: _buildTextField(
                             _newBalanceValueController, 'Adjust',
                             isNumber: true),
@@ -159,6 +163,15 @@ class _EditAccountScreenState extends State<EditAccountScreen> {
                           child: ElevatedButton(
                             onPressed: _editAccount,
                             child: const Text('Save Changes'),
+                          ),
+                        ),
+                      const SizedBox(height: 20),
+                      if (_canBePaid)
+                        SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton(
+                            onPressed: _editAccount,
+                            child: const Text('Add a transaction'),
                           ),
                         ),
                     ],
