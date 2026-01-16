@@ -1,77 +1,67 @@
 import 'package:flutter/material.dart';
-import 'package:frontend/screens/transactions/transaction_screen.dart';
+import 'package:frontend/core/enums.dart';
+import 'package:frontend/models/journal_entry.dart';
 import 'package:frontend/services/api_service.dart';
 import 'package:frontend/widgets/custom_app_bar.dart';
 import 'package:frontend/widgets/main_layout.dart';
 
-class EditAccountScreen extends StatefulWidget {
+class TransactionScreen extends StatefulWidget {
   final String accountId;
   final String profileId;
+  final bool onlyCash;
 
-  const EditAccountScreen({
+  const TransactionScreen({
     super.key,
     required this.accountId,
     required this.profileId,
+    required this.onlyCash,
   });
 
   @override
-  State<EditAccountScreen> createState() => _EditAccountScreenState();
+  State<TransactionScreen> createState() => _TransactionScreenState();
 }
 
-class _EditAccountScreenState extends State<EditAccountScreen> {
+class _TransactionScreenState extends State<TransactionScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _nameController = TextEditingController();
   final _descriptionController = TextEditingController();
-  final _balanceValueController = TextEditingController();
-  final _newBalanceValueController = TextEditingController();
-  String _accountId = "";
-  num _currentBalance = 0;
+  final _valueController = TextEditingController();
   final _apiService = ApiService();
+  List<dynamic> _accountsToPaid = [];
+  Map<String, dynamic> _account = {};
   bool _isCreating = false;
   bool _isLoading = true;
-  bool _isBalanceFieldVisible = false;
-  bool _canBeAdjusted = false;
-  bool _canBePaid = false;
-  bool _canBePaidOnlyCash = false;
+  String? _selectedAccountToPaid;
 
   @override
   void initState() {
     super.initState();
-    _loadAccountData();
+    _loadAccounts();
   }
 
   @override
   void dispose() {
-    _nameController.dispose();
     _descriptionController.dispose();
-    _balanceValueController.dispose();
-    _newBalanceValueController.dispose();
+    _valueController.dispose();
     super.dispose();
   }
 
-  Future<void> _loadAccountData() async {
+  Future<void> _loadAccounts() async {
     try {
-      final details = await _apiService.getAccountProfileDetails(
+      final account = await _apiService.getAccountProfileDetails(
           widget.profileId, widget.accountId);
+      List<dynamic> accountsToPaid = await _apiService.fetchAccounts(
+          widget.profileId, "1.1.01",
+          isOnlyParent: false, isOnlyFinal: true);
+      if (account['type'] != AccountType.liability) {
+        List<dynamic> creditcardAccounts = await _apiService.fetchAccounts(
+            widget.profileId, "2.1.01",
+            isOnlyParent: false, isOnlyFinal: true);
+        accountsToPaid.addAll(creditcardAccounts);
+      }
 
       setState(() {
-        _nameController.text = details['name'] ?? '';
-        _descriptionController.text = details['description'] ?? '';
-        _balanceValueController.text = details['balance']?.toString() ?? '0';
-        _newBalanceValueController.text = '0';
-        _currentBalance = num.tryParse(_balanceValueController.text) ?? 0;
-        _accountId = details['id'];
-
-        if (_currentBalance != 0) {
-          _isBalanceFieldVisible = true;
-        }
-
-        _canBePaid = details.containsKey('can_be_paid') ? true : false;
-        _canBeAdjusted = details.containsKey('can_be_adjusted') ? true : false;
-        if (_canBePaid) {
-          _canBePaidOnlyCash = details.containsKey('paid_only_cash') ? true : false;
-        }
-
+        _accountsToPaid = accountsToPaid;
+        _account = account;
         _isLoading = false;
       });
     } catch (e) {
@@ -90,21 +80,35 @@ class _EditAccountScreenState extends State<EditAccountScreen> {
     setState(() => _isCreating = true);
 
     try {
-      num journalValue = 0;
-      if (num.tryParse(_newBalanceValueController.text) != 0) {
-        journalValue = num.tryParse(_newBalanceValueController.text) ?? 0;
+      num journalValue = num.tryParse(_valueController.text) ?? 0;
+
+      List<JournalEntry> entries = [];
+      if (_account['type'] == AccountType.income.name) {
+        entries = [
+          JournalEntry(
+              accountId: _selectedAccountToPaid!,
+              debitValue: journalValue,
+              creditValue: 0),
+          JournalEntry(
+              accountId: widget.accountId,
+              debitValue: 0,
+              creditValue: journalValue)
+        ];
       } else {
-        journalValue = num.tryParse(_balanceValueController.text) ?? 0;
+        entries = [
+          JournalEntry(
+              accountId: widget.accountId,
+              debitValue: journalValue,
+              creditValue: 0),
+          JournalEntry(
+              accountId: _selectedAccountToPaid!,
+              debitValue: 0,
+              creditValue: journalValue)
+        ];
       }
 
-      final accountData = {
-        'name': _nameController.text,
-        'description': _descriptionController.text,
-        'journal_value': journalValue
-      };
-
-      await _apiService.editAccount(
-          widget.profileId, widget.accountId, accountData);
+      final journal = await _apiService.createJournalEntry(widget.profileId,
+          DateTime.now().toString(), _descriptionController.text, entries);
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -127,6 +131,7 @@ class _EditAccountScreenState extends State<EditAccountScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final titleWidget = "Transaction to ${_account['name']}";
     return MainLayout(
       appBar: CustomAppBar(
         onJournalsChanged: (_) {},
@@ -143,23 +148,38 @@ class _EditAccountScreenState extends State<EditAccountScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text('Edit Account',
-                          style: TextStyle(
+                      Text(titleWidget,
+                          style: const TextStyle(
                               fontSize: 24, fontWeight: FontWeight.bold)),
-                      const SizedBox(height: 20),
-                      _buildTextField(_nameController, 'Name'),
                       const SizedBox(height: 20),
                       _buildTextField(_descriptionController, 'Description'),
                       const SizedBox(height: 20),
-                      _buildTextField(_balanceValueController, 'Balance',
-                          isNumber: true,
-                          enabledField: !_isBalanceFieldVisible && _canBeAdjusted),
+                      _buildTextField(
+                        _valueController,
+                        'Transaction value',
+                        isNumber: true,
+                      ),
                       const SizedBox(height: 20),
-                      Visibility(
-                        visible: _isBalanceFieldVisible && _canBeAdjusted,
-                        child: _buildTextField(
-                            _newBalanceValueController, 'Adjust',
-                            isNumber: true),
+                      DropdownButtonFormField<String>(
+                        value: _selectedAccountToPaid,
+                        hint: const Text('Select account to paid'),
+                        onChanged: (String? newValue) {
+                          setState(() {
+                            _selectedAccountToPaid = newValue;
+                          });
+                        },
+                        items: _accountsToPaid
+                            .map<DropdownMenuItem<String>>((dynamic account) {
+                          return DropdownMenuItem<String>(
+                            value: account['id'],
+                            child: Text(account['name']),
+                          );
+                        }).toList(),
+                        validator: (value) =>
+                            value == null ? 'Please select an account' : null,
+                        decoration: const InputDecoration(
+                          border: OutlineInputBorder(),
+                        ),
                       ),
                       const SizedBox(height: 20),
                       if (_isCreating)
@@ -169,31 +189,10 @@ class _EditAccountScreenState extends State<EditAccountScreen> {
                           width: double.infinity,
                           child: ElevatedButton(
                             onPressed: _editAccount,
-                            child: const Text('Save Changes'),
+                            child: const Text('Save Transaction'),
                           ),
                         ),
                       const SizedBox(height: 20),
-                      if (_canBePaid)
-                        SizedBox(
-                          width: double.infinity,
-                          child: ElevatedButton(
-                            onPressed: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => TransactionScreen(
-                                    profileId: widget.profileId,
-                                    accountId: _accountId,
-                                    onlyCash: _canBePaidOnlyCash,
-                                  ),
-                                ),
-                              ).then((_) {
-                                _loadAccountData();
-                              });
-                            },
-                            child: const Text('Add a transaction'),
-                          ),
-                        ),
                     ],
                   ),
                 ),
