@@ -1,18 +1,20 @@
 import 'package:flutter/material.dart';
+import 'package:frontend/screens/accounts/create_account_screen.dart';
 import 'package:frontend/screens/accounts/edit_account_screen.dart';
 import 'package:frontend/widgets/custom_app_bar.dart';
 import 'package:frontend/widgets/main_layout.dart';
 import 'package:intl/intl.dart';
 import '../services/api_service.dart';
+import '../services/utils_functions.dart';
 
 class ListAccountsScreen extends StatefulWidget {
-  final String? accountParentCode;
+  final String accountParentCode;
   final bool isOnlyParent;
   final bool isOnlyFinal;
 
   const ListAccountsScreen(
       {super.key,
-      this.accountParentCode,
+      required this.accountParentCode,
       this.isOnlyParent = false,
       this.isOnlyFinal = false});
 
@@ -26,6 +28,7 @@ class _ListAccountsScreenState extends State<ListAccountsScreen> {
   String _pageTitle = "Account in: ";
   List<dynamic> _accounts = [];
   bool _isLoading = true;
+  Map<String, dynamic>? _parentAccount;
 
   @override
   void initState() {
@@ -34,13 +37,21 @@ class _ListAccountsScreenState extends State<ListAccountsScreen> {
 
   Future<void> _getPageTitle(String profile) async {
     String? code = widget.accountParentCode;
-    if (code != null) {
+    if (code != null && code.isNotEmpty) {
       final parentCode = code.substring(0, code.length - 1);
       final parentAccount =
           await _apiService.getAccountProfileDetailsByCode(profile, parentCode);
       if (mounted) {
-        _pageTitle = _pageTitle + parentAccount['name'];
+        setState(() {
+          _pageTitle = "Accounts in: ${parentAccount['name']}";
+          _parentAccount = parentAccount;
+        });
       }
+    } else {
+      setState(() {
+        _pageTitle = "Accounts";
+        _parentAccount = null;
+      });
     }
   }
 
@@ -102,10 +113,59 @@ class _ListAccountsScreenState extends State<ListAccountsScreen> {
                   children: [
                     Padding(
                       padding: const EdgeInsets.all(8.0),
-                      child: Text(
-                        _pageTitle,
-                        style: const TextStyle(
-                            fontSize: 20, fontWeight: FontWeight.bold),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            _pageTitle,
+                            style: const TextStyle(
+                                fontSize: 20, fontWeight: FontWeight.bold),
+                          ),
+                          ElevatedButton.icon(
+                            onPressed: () {
+                              if (_selectedProfile != null) {
+                                String newCode;
+                                if (_accounts.isEmpty) {
+                                  newCode = '${widget.accountParentCode}1';
+                                } else {
+                                  newCode = Utils().getTheNextSequenceCode(
+                                      widget.accountParentCode, _accounts);
+                                }
+                                
+                                String accountType =
+                                    _parentAccount?['type'] ?? 'asset';
+                                String accountNature =
+                                    _parentAccount?['nature'] ?? 'debit';
+
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => CreateAccountScreen(
+                                      profileId: _selectedProfile!,
+                                      code: newCode,
+                                      parentCode: widget.accountParentCode,
+                                      accountType: accountType,
+                                      accountNature: accountNature,
+                                      isFinal: true,
+                                    ),
+                                  ),
+                                ).then((_) {
+                                  if (_selectedProfile != null) {
+                                    _getAccounts(_selectedProfile!);
+                                  }
+                                });
+                              } else {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                      content: Text(
+                                          'Please select a profile first.')),
+                                );
+                              }
+                            },
+                            icon: const Icon(Icons.add),
+                            label: const Text('Add'),
+                          ),
+                        ],
                       ),
                     ),
                     _accounts.isEmpty

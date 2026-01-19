@@ -151,6 +151,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           builder: (context) => CreateAccountScreen(
             profileId: _selectedProfile!,
             code: "1.01.01.010",
+            parentCode: "1.1.01.",
             accountType: AccountType.asset.name,
             accountNature: AccountNature.debit.name,
             isFinal: true,
