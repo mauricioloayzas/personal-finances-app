@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:frontend/core/enums.dart';
 import 'package:frontend/screens/accounts/create_account_screen.dart';
 import 'package:frontend/screens/accounts/edit_account_screen.dart';
+import 'package:frontend/screens/transactions/another_transaction.dart';
 import 'package:frontend/widgets/custom_app_bar.dart';
 import 'package:frontend/widgets/main_layout.dart';
 import 'package:intl/intl.dart'; 
@@ -86,7 +87,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
                               ),
                               ElevatedButton.icon(
                                 icon: const Icon(Icons.add),
-                                onPressed: () => _navigateToCreateAccount(),
+                                onPressed: () => {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                        builder: (context) => const AnotherTransaction()
+                                    ),
+                                  )
+                                },
                                 label: const Text('Add'),
                               ),
                             ],

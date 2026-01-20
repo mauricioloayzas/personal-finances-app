@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:frontend/screens/list_accounts_screen.dart';
+import 'package:frontend/screens/transactions/another_transaction.dart';
 
 class CustomDrawer extends StatelessWidget {
   final _storage = const FlutterSecureStorage();
@@ -101,11 +102,29 @@ class CustomDrawer extends StatelessWidget {
             },
           ),
           ListTile(
-            leading: const Icon(Icons.monetization_on_sharp),
-            title: const Text('Transactions'),
+            leading: const Icon(Icons.food_bank),
+            title: const Text('Exprenses'),
             onTap: () {
-              // Navegar a Configuración
-              Navigator.pushNamed(context, '/cash');
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                    builder: (context) => const ListAccountsScreen(
+                          accountParentCode: "5.",
+                          isOnlyParent: true,
+                          isOnlyFinal: false,
+                        )),
+              );
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.monetization_on_sharp),
+            title: const Text('Another Transactions'),
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                    builder: (context) => const AnotherTransaction()),
+              );
             },
           ),
           const Divider(),
