@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:intl/intl.dart';
 
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
@@ -245,6 +246,33 @@ class ApiService {
     if (response.statusCode != 201) {
       final errorBody = jsonDecode(response.body);
       throw Exception(errorBody['message'] ?? 'Failed to create journal entry');
+    }
+  }
+
+  Future<List<dynamic>> fetchDashboardInformation(String profileId) async {
+    final idToken = await _storage.read(key: 'idToken');
+    final apiPFUrl = dotenv.env['API_PF_URL'];
+
+    final DateTime now = DateTime.now();
+  
+    final DateFormat yearFormat = DateFormat('yyyy');
+    final DateFormat monthFormat = DateFormat('MM');
+    
+    final String year = yearFormat.format(now);
+    final String month = monthFormat.format(now);
+
+    final response = await http.get(
+      Uri.parse('$apiPFUrl/profiles/$profileId/dashboard?year=$year&month=$month'),
+      headers: {
+        'Authorization': 'Bearer $idToken',
+      },
+    );
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    } else {
+      final errorBody = jsonDecode(response.body);
+      throw Exception(errorBody['message'] ?? 'Failed to load accounts');
     }
   }
 }

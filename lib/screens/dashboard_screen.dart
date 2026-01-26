@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:frontend/core/enums.dart';
 import 'package:frontend/screens/accounts/create_account_screen.dart';
 import 'package:frontend/screens/accounts/edit_account_screen.dart';
+import 'package:frontend/screens/list_accounts_screen.dart';
 import 'package:frontend/screens/transactions/another_transaction.dart';
+import 'package:frontend/services/utils_functions.dart';
 import 'package:frontend/widgets/custom_app_bar.dart';
 import 'package:frontend/widgets/main_layout.dart';
 import 'package:intl/intl.dart'; 
@@ -15,31 +17,25 @@ class DashboardScreen extends StatefulWidget {
 }
 
 class _DashboardScreenState extends State<DashboardScreen> {
-  List<dynamic> _journals = [];
-  bool _isFetchingJournals = true;
+  List<dynamic> _dashboardInformation = [];
+  bool _isFetchingDashboardInformation = true;
   String? _selectedProfile;
-
-  // Función auxiliar para dar formato de moneda
-  String _formatCurrency(dynamic value) {
-    final number = num.tryParse(value.toString()) ?? 0;
-    return NumberFormat.currency(symbol: '\$', decimalDigits: 2).format(number);
-  }
 
   @override
   Widget build(BuildContext context) {
     return MainLayout(
       appBar: CustomAppBar(
-        onJournalsChanged: (journals) {
+        onDashboardInformationChanged: (dashboardInformation) {
           if (mounted) {
             setState(() {
-              _journals = journals;
+              _dashboardInformation = dashboardInformation;
             });
           }
         },
-        onFetchingJournalsChanged: (isFetching) {
+        onFetchingDashboardInformationChanged: (isFetching) {
           if (mounted) {
             setState(() {
-              _isFetchingJournals = isFetching;
+              _isFetchingDashboardInformation = isFetching;
             });
           }
         },
@@ -55,16 +51,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ? const Center(
               child: Text('Please select a profile to see the accounts.'),
             )
-          : _isFetchingJournals
+          : _isFetchingDashboardInformation
               ? const Center(
                   child: CircularProgressIndicator(),
                 )
-              : _journals.isEmpty
+              : _dashboardInformation.isEmpty
                   ? Center(
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: <Widget>[
-                          const Text('No journals yet.'),
+                          const Text('No dashboardInformation yet.'),
                           TextButton(
                             child: const Text('You can init setting the cash'),
                             onPressed: () {
@@ -82,7 +78,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
                               const Text(
-                                'All your transactions',
+                                'Here is your resume:',
                                 style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                               ),
                               ElevatedButton.icon(
@@ -102,44 +98,45 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         ),
                         Expanded(
                           child: ListView.builder(
-                            itemCount: _journals.length,
+                            itemCount: _dashboardInformation.length,
                             itemBuilder: (context, index) {
-                              final account = _journals[index];
-                              final balance = num.tryParse(account['value'].toString()) ?? 0;
+                              final account = _dashboardInformation[index];
+                              final balance = num.tryParse(account['balance'].toString()) ?? 0;
+                              final bool isPositive = Utils().checkPositiveBalance(account, balance);
 
                               return Card(
                                 margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                                 child: ListTile(
                                   leading: CircleAvatar(
-                                    backgroundColor: balance >= 0 ? Colors.blue.shade100 : Colors.red.shade100,
+                                    backgroundColor: isPositive ? Colors.blue.shade100 : Colors.red.shade100,
                                     child: Icon(
                                       balance >= 0 ? Icons.account_balance_wallet : Icons.warning_amber_rounded,
-                                      color: balance >= 0 ? Colors.blue : Colors.red,
+                                      color: isPositive ? Colors.blue : Colors.red,
                                     ),
                                   ),
                                   title: Text(
-                                    account['description'],
+                                    account['name'],
                                     style: const TextStyle(fontWeight: FontWeight.bold),
                                   ),
                                   // OPCIÓN 2: Balance anidado en el subtitle
                                   subtitle: Column(
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
-                                      Text(DateFormat('y-MM-dd HH:mm:ss').format(DateTime.parse(account['date']))),
+                                      Text(account['code']),
                                       const SizedBox(height: 5),
                                       Text(
-                                        'Value: ${_formatCurrency(account['value'])}',
+                                        'Value: ${Utils().formatCurrency(account, balance)}',
                                         style: TextStyle(
                                           fontSize: 15,
                                           fontWeight: FontWeight.w600,
-                                          color: balance >= 0 ? Colors.blue.shade700 : Colors.red.shade700,
+                                          color: isPositive ? Colors.blue.shade700 : Colors.red.shade700,
                                         ),
                                       ),
                                     ],
                                   ),
                                   trailing: TextButton(
                                     child: const Text('Edit'),
-                                    onPressed: () => _navigateToEditAccount(account),
+                                    onPressed: () => _navigateToListChildAccount(account),
                                   ),
                                 ),
                               );
@@ -151,34 +148,19 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  void _navigateToCreateAccount() {
+  void _navigateToListChildAccount(dynamic account) {
     if (_selectedProfile != null) {
+      String parentCodeToPass = account['code'] + ".";
       Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (context) => CreateAccountScreen(
-            profileId: _selectedProfile!,
-            code: "1.01.01.010",
-            parentCode: "1.1.01.",
-            accountType: AccountType.asset.name,
-            accountNature: AccountNature.debit.name,
-            isFinal: true,
-          ),
-        ),
-      );
-    }
-  }
-
-  void _navigateToEditAccount(dynamic account) {
-    if (_selectedProfile != null) {
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => EditAccountScreen(
-            profileId: _selectedProfile!,
-            accountId: account['id'],
-          ),
-        ),
+            builder: (context) =>
+                ListAccountsScreen(
+                  accountParentCode:
+                      parentCodeToPass,
+                  isOnlyParent: true,
+                  isOnlyFinal: false,
+                )),
       ).then((_) {
         // Aquí podrías refrescar la lista si fuera necesario
       });

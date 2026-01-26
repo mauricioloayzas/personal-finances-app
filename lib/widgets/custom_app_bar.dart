@@ -2,14 +2,14 @@ import 'package:flutter/material.dart';
 import '../services/api_service.dart';
 
 class CustomAppBar extends StatefulWidget implements PreferredSizeWidget {
-  final ValueChanged<List<dynamic>> onJournalsChanged;
-  final ValueChanged<bool> onFetchingJournalsChanged;
+  final ValueChanged<List<dynamic>> onDashboardInformationChanged;
+  final ValueChanged<bool> onFetchingDashboardInformationChanged;
   final ValueChanged<String?> onSelectedProfileChanged;
 
   const CustomAppBar({
     super.key,
-    required this.onJournalsChanged,
-    required this.onFetchingJournalsChanged,
+    required this.onDashboardInformationChanged,
+    required this.onFetchingDashboardInformationChanged,
     required this.onSelectedProfileChanged,
   });
 
@@ -40,7 +40,7 @@ class _CustomAppBarState extends State<CustomAppBar> {
         if (_profiles.isNotEmpty) {
           _selectedProfile = _profiles.first['id'].toString();
           widget.onSelectedProfileChanged(_selectedProfile);
-          _loadJournals(_selectedProfile!);
+          _loadDashboardInformation(_selectedProfile!);
         }
         _isLoading = false;
       });
@@ -52,16 +52,16 @@ class _CustomAppBarState extends State<CustomAppBar> {
     }
   }
 
-  Future<void> _loadJournals(String profileId) async {
-    widget.onFetchingJournalsChanged(true);
+  Future<void> _loadDashboardInformation(String profileId) async {
+    widget.onFetchingDashboardInformationChanged(true);
     try {
-      final journals = await _apiService.fetchJournals(profileId);
-      widget.onJournalsChanged(journals);
+      final journals = await _apiService.fetchDashboardInformation(profileId);
+      widget.onDashboardInformationChanged(journals);
     } catch (e) {
-      widget.onJournalsChanged([]);
+      widget.onDashboardInformationChanged([]);
       _showError(e.toString());
     } finally {
-      widget.onFetchingJournalsChanged(false);
+      widget.onFetchingDashboardInformationChanged(false);
     }
   }
 
@@ -70,9 +70,9 @@ class _CustomAppBarState extends State<CustomAppBar> {
       setState(() {
         _selectedProfile = newProfileId;
         widget.onSelectedProfileChanged(newProfileId);
-        widget.onJournalsChanged([]);
+        widget.onDashboardInformationChanged([]);
       });
-      _loadJournals(newProfileId);
+      _loadDashboardInformation(newProfileId);
     }
   }
 

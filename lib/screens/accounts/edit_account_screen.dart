@@ -129,8 +129,8 @@ class _EditAccountScreenState extends State<EditAccountScreen> {
   Widget build(BuildContext context) {
     return MainLayout(
       appBar: CustomAppBar(
-        onJournalsChanged: (_) {},
-        onFetchingJournalsChanged: (_) {},
+        onDashboardInformationChanged: (_) {},
+        onFetchingDashboardInformationChanged: (_) {},
         onSelectedProfileChanged: (_) {},
       ),
       child: _isLoading

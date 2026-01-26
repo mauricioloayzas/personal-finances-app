@@ -109,8 +109,8 @@ class _AnotherTransactionState extends State<AnotherTransaction> {
   Widget build(BuildContext context) {
     return MainLayout(
       appBar: CustomAppBar(
-        onJournalsChanged: (_) {},
-        onFetchingJournalsChanged: (_) {},
+        onDashboardInformationChanged: (_) {},
+        onFetchingDashboardInformationChanged: (_) {},
         onSelectedProfileChanged: (profileId) {
           if (mounted) {
             setState(() {

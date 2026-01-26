@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:frontend/core/enums.dart';
 import 'package:frontend/screens/accounts/create_account_screen.dart';
 import 'package:frontend/screens/accounts/edit_account_screen.dart';
 import 'package:frontend/widgets/custom_app_bar.dart';
@@ -71,17 +72,12 @@ class _ListAccountsScreenState extends State<ListAccountsScreen> {
     }
   }
 
-  String _formatCurrency(dynamic value) {
-    final number = num.tryParse(value.toString()) ?? 0;
-    return NumberFormat.currency(symbol: '\$', decimalDigits: 2).format(number);
-  }
-
   @override
   Widget build(BuildContext context) {
     return MainLayout(
       appBar: CustomAppBar(
-        onJournalsChanged: (journals) {},
-        onFetchingJournalsChanged: (isFetching) {},
+        onDashboardInformationChanged: (journals) {},
+        onFetchingDashboardInformationChanged: (isFetching) {},
         onSelectedProfileChanged: (profileId) {
           if (mounted) {
             setState(() {
@@ -131,7 +127,7 @@ class _ListAccountsScreenState extends State<ListAccountsScreen> {
                                   newCode = Utils().getTheNextSequenceCode(
                                       widget.accountParentCode, _accounts);
                                 }
-                                
+
                                 String accountType =
                                     _parentAccount?['type'] ?? 'asset';
                                 String accountNature =
@@ -178,20 +174,21 @@ class _ListAccountsScreenState extends State<ListAccountsScreen> {
                                 final balance = num.tryParse(
                                         account['balance'].toString()) ??
                                     0;
+                                final bool isPositive = Utils().checkPositiveBalance(account, balance);
 
                                 return Card(
                                   margin: const EdgeInsets.symmetric(
                                       horizontal: 8, vertical: 4),
                                   child: ListTile(
                                     leading: CircleAvatar(
-                                      backgroundColor: balance >= 0
+                                      backgroundColor: isPositive
                                           ? Colors.blue.shade100
                                           : Colors.red.shade100,
                                       child: Icon(
                                         balance >= 0
                                             ? Icons.monetization_on
                                             : Icons.money_off,
-                                        color: balance >= 0
+                                        color: isPositive
                                             ? Colors.blue
                                             : Colors.red,
                                       ),
@@ -208,11 +205,11 @@ class _ListAccountsScreenState extends State<ListAccountsScreen> {
                                         Text(account['description']),
                                         const SizedBox(height: 5),
                                         Text(
-                                          'Balance: ${_formatCurrency(balance)}',
+                                          'Balance: ${Utils().formatCurrency(account, balance)}',
                                           style: TextStyle(
                                             fontSize: 15,
                                             fontWeight: FontWeight.w600,
-                                            color: balance >= 0
+                                            color: isPositive
                                                 ? Colors.blue.shade700
                                                 : Colors.red.shade700,
                                           ),
