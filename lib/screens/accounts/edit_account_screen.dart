@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:frontend/screens/transactions/transaction_screen.dart';
-import 'package:frontend/services/api_service.dart';
-import 'package:frontend/widgets/custom_app_bar.dart';
-import 'package:frontend/widgets/main_layout.dart';
+import 'package:mifinper/screens/transactions/transaction_screen.dart';
+import 'package:mifinper/services/api_service.dart';
+import 'package:mifinper/widgets/custom_app_bar.dart';
+import 'package:mifinper/widgets/main_layout.dart';
 
 class EditAccountScreen extends StatefulWidget {
   final String accountId;
@@ -69,7 +69,8 @@ class _EditAccountScreenState extends State<EditAccountScreen> {
         _canBePaid = details.containsKey('can_be_paid') ? true : false;
         _canBeAdjusted = details.containsKey('can_be_adjusted') ? true : false;
         if (_canBePaid) {
-          _canBePaidOnlyCash = details.containsKey('paid_only_cash') ? true : false;
+          _canBePaidOnlyCash =
+              details.containsKey('paid_only_cash') ? true : false;
         }
 
         _isLoading = false;
@@ -153,7 +154,8 @@ class _EditAccountScreenState extends State<EditAccountScreen> {
                       const SizedBox(height: 20),
                       _buildTextField(_balanceValueController, 'Balance',
                           isNumber: true,
-                          enabledField: !_isBalanceFieldVisible && _canBeAdjusted),
+                          enabledField:
+                              !_isBalanceFieldVisible && _canBeAdjusted),
                       const SizedBox(height: 20),
                       Visibility(
                         visible: _isBalanceFieldVisible && _canBeAdjusted,
@@ -187,8 +189,8 @@ class _EditAccountScreenState extends State<EditAccountScreen> {
                                     onlyCash: _canBePaidOnlyCash,
                                   ),
                                 ),
-                              ).then((_) {
-                                _loadAccountData();
+                              ).then((_) async {
+                                await _loadAccountData();
                               });
                             },
                             child: const Text('Add a transaction'),

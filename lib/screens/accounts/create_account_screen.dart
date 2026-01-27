@@ -1,10 +1,10 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
-import 'package:frontend/models/account_data.dart';
-import 'package:frontend/services/api_service.dart';
-import 'package:frontend/widgets/custom_app_bar.dart';
-import 'package:frontend/widgets/main_layout.dart';
+import 'package:mifinper/models/account_data.dart';
+import 'package:mifinper/services/api_service.dart';
+import 'package:mifinper/widgets/custom_app_bar.dart';
+import 'package:mifinper/widgets/main_layout.dart';
 
 class CreateAccountScreen extends StatefulWidget {
   final String profileId;

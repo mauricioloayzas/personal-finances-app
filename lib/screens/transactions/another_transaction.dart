@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:frontend/models/journal_entry.dart';
-import 'package:frontend/services/api_service.dart';
-import 'package:frontend/widgets/custom_app_bar.dart';
-import 'package:frontend/widgets/main_layout.dart';
+import 'package:mifinper/models/journal_entry.dart';
+import 'package:mifinper/services/api_service.dart';
+import 'package:mifinper/widgets/custom_app_bar.dart';
+import 'package:mifinper/widgets/main_layout.dart';
 
 class AnotherTransaction extends StatefulWidget {
   const AnotherTransaction({

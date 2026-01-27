@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:frontend/core/enums.dart';
-import 'package:frontend/screens/accounts/create_account_screen.dart';
-import 'package:frontend/screens/accounts/edit_account_screen.dart';
-import 'package:frontend/widgets/custom_app_bar.dart';
-import 'package:frontend/widgets/main_layout.dart';
+import 'package:mifinper/core/enums.dart';
+import 'package:mifinper/screens/accounts/create_account_screen.dart';
+import 'package:mifinper/screens/accounts/edit_account_screen.dart';
+import 'package:mifinper/widgets/custom_app_bar.dart';
+import 'package:mifinper/widgets/main_layout.dart';
 import 'package:intl/intl.dart';
 import '../services/api_service.dart';
 import '../services/utils_functions.dart';
@@ -174,7 +174,8 @@ class _ListAccountsScreenState extends State<ListAccountsScreen> {
                                 final balance = num.tryParse(
                                         account['balance'].toString()) ??
                                     0;
-                                final bool isPositive = Utils().checkPositiveBalance(account, balance);
+                                final bool isPositive = Utils()
+                                    .checkPositiveBalance(account, balance);
 
                                 return Card(
                                   margin: const EdgeInsets.symmetric(

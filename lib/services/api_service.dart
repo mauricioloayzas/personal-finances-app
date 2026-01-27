@@ -3,7 +3,7 @@ import 'package:intl/intl.dart';
 
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:frontend/models/journal_entry.dart';
+import 'package:mifinper/models/journal_entry.dart';
 import 'package:http/http.dart' as http;
 
 class ApiService {
@@ -254,15 +254,16 @@ class ApiService {
     final apiPFUrl = dotenv.env['API_PF_URL'];
 
     final DateTime now = DateTime.now();
-  
+
     final DateFormat yearFormat = DateFormat('yyyy');
     final DateFormat monthFormat = DateFormat('MM');
-    
+
     final String year = yearFormat.format(now);
     final String month = monthFormat.format(now);
 
     final response = await http.get(
-      Uri.parse('$apiPFUrl/profiles/$profileId/dashboard?year=$year&month=$month'),
+      Uri.parse(
+          '$apiPFUrl/profiles/$profileId/dashboard?year=$year&month=$month'),
       headers: {
         'Authorization': 'Bearer $idToken',
       },

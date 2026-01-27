@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:frontend/core/enums.dart';
-import 'package:frontend/screens/accounts/create_account_screen.dart';
-import 'package:frontend/screens/accounts/edit_account_screen.dart';
-import 'package:frontend/screens/list_accounts_screen.dart';
-import 'package:frontend/screens/transactions/another_transaction.dart';
-import 'package:frontend/services/utils_functions.dart';
-import 'package:frontend/widgets/custom_app_bar.dart';
-import 'package:frontend/widgets/main_layout.dart';
-import 'package:intl/intl.dart'; 
+import 'package:mifinper/core/enums.dart';
+import 'package:mifinper/screens/accounts/create_account_screen.dart';
+import 'package:mifinper/screens/accounts/edit_account_screen.dart';
+import 'package:mifinper/screens/list_accounts_screen.dart';
+import 'package:mifinper/screens/transactions/another_transaction.dart';
+import 'package:mifinper/services/utils_functions.dart';
+import 'package:mifinper/widgets/custom_app_bar.dart';
+import 'package:mifinper/widgets/main_layout.dart';
+import 'package:intl/intl.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -79,7 +79,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             children: [
                               const Text(
                                 'Here is your resume:',
-                                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                                style: TextStyle(
+                                    fontSize: 20, fontWeight: FontWeight.bold),
                               ),
                               ElevatedButton.icon(
                                 icon: const Icon(Icons.add),
@@ -87,8 +88,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                   Navigator.push(
                                     context,
                                     MaterialPageRoute(
-                                        builder: (context) => const AnotherTransaction()
-                                    ),
+                                        builder: (context) =>
+                                            const AnotherTransaction()),
                                   )
                                 },
                                 label: const Text('Add'),
@@ -101,26 +102,37 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             itemCount: _dashboardInformation.length,
                             itemBuilder: (context, index) {
                               final account = _dashboardInformation[index];
-                              final balance = num.tryParse(account['balance'].toString()) ?? 0;
-                              final bool isPositive = Utils().checkPositiveBalance(account, balance);
+                              final balance =
+                                  num.tryParse(account['balance'].toString()) ??
+                                      0;
+                              final bool isPositive = Utils()
+                                  .checkPositiveBalance(account, balance);
 
                               return Card(
-                                margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                margin: const EdgeInsets.symmetric(
+                                    horizontal: 8, vertical: 4),
                                 child: ListTile(
                                   leading: CircleAvatar(
-                                    backgroundColor: isPositive ? Colors.blue.shade100 : Colors.red.shade100,
+                                    backgroundColor: isPositive
+                                        ? Colors.blue.shade100
+                                        : Colors.red.shade100,
                                     child: Icon(
-                                      balance >= 0 ? Icons.account_balance_wallet : Icons.warning_amber_rounded,
-                                      color: isPositive ? Colors.blue : Colors.red,
+                                      balance >= 0
+                                          ? Icons.account_balance_wallet
+                                          : Icons.warning_amber_rounded,
+                                      color:
+                                          isPositive ? Colors.blue : Colors.red,
                                     ),
                                   ),
                                   title: Text(
                                     account['name'],
-                                    style: const TextStyle(fontWeight: FontWeight.bold),
+                                    style: const TextStyle(
+                                        fontWeight: FontWeight.bold),
                                   ),
                                   // OPCIÓN 2: Balance anidado en el subtitle
                                   subtitle: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
                                       Text(account['code']),
                                       const SizedBox(height: 5),
@@ -129,14 +141,17 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                         style: TextStyle(
                                           fontSize: 15,
                                           fontWeight: FontWeight.w600,
-                                          color: isPositive ? Colors.blue.shade700 : Colors.red.shade700,
+                                          color: isPositive
+                                              ? Colors.blue.shade700
+                                              : Colors.red.shade700,
                                         ),
                                       ),
                                     ],
                                   ),
                                   trailing: TextButton(
                                     child: const Text('Edit'),
-                                    onPressed: () => _navigateToListChildAccount(account),
+                                    onPressed: () =>
+                                        _navigateToListChildAccount(account),
                                   ),
                                 ),
                               );
@@ -154,10 +169,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
       Navigator.push(
         context,
         MaterialPageRoute(
-            builder: (context) =>
-                ListAccountsScreen(
-                  accountParentCode:
-                      parentCodeToPass,
+            builder: (context) => ListAccountsScreen(
+                  accountParentCode: parentCodeToPass,
                   isOnlyParent: true,
                   isOnlyFinal: false,
                 )),

@@ -1,5 +1,5 @@
 import 'package:intl/intl.dart';
-import 'package:frontend/core/enums.dart';
+import 'package:mifinper/core/enums.dart';
 
 class Utils {
   String getTheNextSequenceCode(String accountParentCode, List accounts) {

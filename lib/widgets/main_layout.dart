@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:frontend/widgets/custom_drawer.dart';
+import 'package:mifinper/widgets/custom_drawer.dart';
 
 class MainLayout extends StatelessWidget {
   final Widget child;

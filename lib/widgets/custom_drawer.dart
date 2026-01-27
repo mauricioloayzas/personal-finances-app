@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:frontend/screens/list_accounts_screen.dart';
-import 'package:frontend/screens/transactions/another_transaction.dart';
+import 'package:mifinper/screens/list_accounts_screen.dart';
+import 'package:mifinper/screens/transactions/another_transaction.dart';
 
 class CustomDrawer extends StatelessWidget {
   final _storage = const FlutterSecureStorage();
@@ -46,15 +46,13 @@ class CustomDrawer extends StatelessWidget {
             title: const Text('Cash'),
             onTap: () {
               Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const ListAccountsScreen(
-                    accountParentCode: "1.1.01.",
-                    isOnlyParent: false,
-                    isOnlyFinal: true,
-                  )
-                )
-              );
+                  context,
+                  MaterialPageRoute(
+                      builder: (context) => const ListAccountsScreen(
+                            accountParentCode: "1.1.01.",
+                            isOnlyParent: false,
+                            isOnlyFinal: true,
+                          )));
             },
           ),
           ListTile(

@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:frontend/core/enums.dart';
-import 'package:frontend/models/journal_entry.dart';
-import 'package:frontend/services/api_service.dart';
-import 'package:frontend/widgets/custom_app_bar.dart';
-import 'package:frontend/widgets/main_layout.dart';
+import 'package:mifinper/core/enums.dart';
+import 'package:mifinper/models/journal_entry.dart';
+import 'package:mifinper/services/api_service.dart';
+import 'package:mifinper/widgets/custom_app_bar.dart';
+import 'package:mifinper/widgets/main_layout.dart';
 
 class TransactionScreen extends StatefulWidget {
   final String accountId;
@@ -52,7 +52,7 @@ class _TransactionScreenState extends State<TransactionScreen> {
       List<dynamic> accountsToPaid = await _apiService.fetchAccounts(
           widget.profileId, "1.1.01",
           isOnlyParent: false, isOnlyFinal: true);
-      if (account['type'] != AccountType.liability) {
+      if (account['type'] != AccountType.liability.name) {
         List<dynamic> creditcardAccounts = await _apiService.fetchAccounts(
             widget.profileId, "2.1.01",
             isOnlyParent: false, isOnlyFinal: true);
@@ -74,7 +74,7 @@ class _TransactionScreenState extends State<TransactionScreen> {
     }
   }
 
-  Future<void> _editAccount() async {
+  Future<void> _createTransaction() async {
     if (!_formKey.currentState!.validate()) return;
 
     setState(() => _isCreating = true);
@@ -107,7 +107,7 @@ class _TransactionScreenState extends State<TransactionScreen> {
         ];
       }
 
-      final journal = await _apiService.createJournalEntry(widget.profileId,
+      await _apiService.createJournalEntry(widget.profileId,
           DateTime.now().toString(), _descriptionController.text, entries);
 
       if (mounted) {
@@ -188,7 +188,7 @@ class _TransactionScreenState extends State<TransactionScreen> {
                         SizedBox(
                           width: double.infinity,
                           child: ElevatedButton(
-                            onPressed: _editAccount,
+                            onPressed: _createTransaction,
                             child: const Text('Save Transaction'),
                           ),
                         ),

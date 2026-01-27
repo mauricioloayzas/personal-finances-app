@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:frontend/screens/dashboard_screen.dart';
-import 'package:frontend/screens/login_screen.dart';
-import 'package:frontend/screens/signup_screen.dart';
+import 'package:mifinper/screens/dashboard_screen.dart';
+import 'package:mifinper/screens/login_screen.dart';
+import 'package:mifinper/screens/signup_screen.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 Future<void> main() async {
