@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:mifinper/screens/transactions/transaction_screen.dart';
 import 'package:mifinper/services/api_service.dart';
+import 'package:mifinper/services/utils_functions.dart';
 import 'package:mifinper/widgets/custom_app_bar.dart';
 import 'package:mifinper/widgets/main_layout.dart';
 
@@ -24,6 +25,7 @@ class _EditAccountScreenState extends State<EditAccountScreen> {
   final _descriptionController = TextEditingController();
   final _balanceValueController = TextEditingController();
   final _newBalanceValueController = TextEditingController();
+  Map<String, dynamic> _accountDetail = {};
   String _accountId = "";
   num _currentBalance = 0;
   final _apiService = ApiService();
@@ -51,26 +53,26 @@ class _EditAccountScreenState extends State<EditAccountScreen> {
 
   Future<void> _loadAccountData() async {
     try {
-      final details = await _apiService.getAccountProfileDetails(
+      _accountDetail = await _apiService.getAccountProfileDetails(
           widget.profileId, widget.accountId);
 
       setState(() {
-        _nameController.text = details['name'] ?? '';
-        _descriptionController.text = details['description'] ?? '';
-        _balanceValueController.text = details['balance']?.toString() ?? '0';
+        _nameController.text = _accountDetail['name'] ?? '';
+        _descriptionController.text = _accountDetail['description'] ?? '';
+        _balanceValueController.text = _accountDetail['balance']?.toString() ?? '0';
         _newBalanceValueController.text = '0';
         _currentBalance = num.tryParse(_balanceValueController.text) ?? 0;
-        _accountId = details['id'];
+        _accountId = _accountDetail['id'];
 
         if (_currentBalance != 0) {
           _isBalanceFieldVisible = true;
         }
 
-        _canBePaid = details.containsKey('can_be_paid') ? true : false;
-        _canBeAdjusted = details.containsKey('can_be_adjusted') ? true : false;
+        _canBePaid = _accountDetail.containsKey('can_be_paid') ? true : false;
+        _canBeAdjusted = _accountDetail.containsKey('can_be_adjusted') ? true : false;
         if (_canBePaid) {
           _canBePaidOnlyCash =
-              details.containsKey('paid_only_cash') ? true : false;
+              _accountDetail.containsKey('paid_only_cash') ? true : false;
         }
 
         _isLoading = false;
@@ -214,7 +216,8 @@ class _EditAccountScreenState extends State<EditAccountScreen> {
 
     // 3. Solo aplicamos la lógica de color si es un campo numérico Y el valor es un número válido
     if (isNumber && doubleValue != null) {
-      dynamicColor = doubleValue > 0 ? Colors.blue : Colors.red;
+      final bool isPositive = Utils().checkPositiveBalance(_accountDetail, doubleValue);
+      dynamicColor = isPositive ? Colors.blue : Colors.red;
     }
 
     return TextFormField(
