@@ -52,7 +52,10 @@ class _TransactionScreenState extends State<TransactionScreen> {
       List<dynamic> accountsToPaid = await _apiService.fetchAccounts(
           widget.profileId, "1.1.01",
           isOnlyParent: false, isOnlyFinal: true);
-      if (account['type'] != AccountType.liability.name) {
+      if (
+        account['type'] != AccountType.liability.name && 
+        account['type'] != AccountType.income.name
+      ) {
         List<dynamic> creditcardAccounts = await _apiService.fetchAccounts(
             widget.profileId, "2.1.01",
             isOnlyParent: false, isOnlyFinal: true);

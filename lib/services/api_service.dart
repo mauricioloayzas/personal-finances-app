@@ -145,7 +145,7 @@ class ApiService {
     accountCode = accountCode.replaceAll(".", "-");
     final response = await http.get(
       Uri.parse(
-          '$apiOrchestratorUrl/profiles/$profileId/accounts-by-code/$accountCode'),
+          '$apiOrchestratorUrl/profiles/$profileId/accounts/code/$accountCode'),
       headers: {
         'Authorization': 'Bearer $idToken',
       },
