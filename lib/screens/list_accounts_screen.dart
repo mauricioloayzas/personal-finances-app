@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:mifinper/screens/accounts/create_account_screen.dart';
-import 'package:mifinper/screens/accounts/edit_account_screen.dart';
+import 'package:mifinper/screens/transactions/list_transactions_screen.dart';
 import 'package:mifinper/widgets/custom_app_bar.dart';
 import 'package:mifinper/widgets/main_layout.dart';
 import '../services/api_service.dart';
@@ -36,7 +36,7 @@ class _ListAccountsScreenState extends State<ListAccountsScreen> {
 
   Future<void> _getPageTitle(String profile) async {
     String? code = widget.accountParentCode;
-    if (code != null && code.isNotEmpty) {
+    if (code.isNotEmpty) {
       final parentCode = code.substring(0, code.length - 1);
       final parentAccount =
           await _apiService.getAccountProfileDetailsByCode(profile, parentCode);
@@ -168,9 +168,11 @@ class _ListAccountsScreenState extends State<ListAccountsScreen> {
                             child: ListView.builder(
                               itemCount: _accounts.length,
                               itemBuilder: (context, index) {
-                                final account = _accounts[index];
+                                final account = Utils().setAccountData(_accounts[index]);
+                                final accountObject =
+                                    Utils().setAccountData(_accounts[index]);
                                 final balance = num.tryParse(
-                                        account['balance'].toString()) ??
+                                        accountObject.balance.toString()) ??
                                     0;
                                 final bool isPositive = Utils()
                                     .checkPositiveBalance(account, balance);
@@ -193,7 +195,7 @@ class _ListAccountsScreenState extends State<ListAccountsScreen> {
                                       ),
                                     ),
                                     title: Text(
-                                      account['name'],
+                                      account.name,
                                       style: const TextStyle(
                                           fontWeight: FontWeight.bold),
                                     ),
@@ -201,7 +203,7 @@ class _ListAccountsScreenState extends State<ListAccountsScreen> {
                                       crossAxisAlignment:
                                           CrossAxisAlignment.start,
                                       children: [
-                                        Text(account['description']),
+                                        Text(account.description),
                                         const SizedBox(height: 5),
                                         Text(
                                           'Balance: ${Utils().formatCurrency(account, balance)}',
@@ -217,12 +219,12 @@ class _ListAccountsScreenState extends State<ListAccountsScreen> {
                                     ),
                                     trailing: TextButton(
                                       child: Text(
-                                          !account['final'] ? 'See' : 'Edit'),
+                                          !account.isFinal ? 'See' : 'Edit'),
                                       onPressed: () {
                                         if (_selectedProfile != null) {
-                                          if (!account['final']) {
+                                          if (!account.isFinal) {
                                             String parentCodeToPass =
-                                                account['code'] + ".";
+                                                account.code + ".";
                                             Navigator.push(
                                               context,
                                               MaterialPageRoute(
@@ -239,9 +241,8 @@ class _ListAccountsScreenState extends State<ListAccountsScreen> {
                                               context,
                                               MaterialPageRoute(
                                                 builder: (context) =>
-                                                    EditAccountScreen(
-                                                  profileId: _selectedProfile!,
-                                                  accountId: account['id'],
+                                                    ListTransactionsScreen(
+                                                  accountId: _accounts[index]['id'],
                                                 ),
                                               ),
                                             ).then((_) {

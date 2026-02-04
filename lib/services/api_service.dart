@@ -276,4 +276,42 @@ class ApiService {
       throw Exception(errorBody['message'] ?? 'Failed to load accounts');
     }
   }
+
+  Future<List<dynamic>> fetchJournalMovements(
+      String profileId, String accountId,
+      {int? year, int? month}) async {
+    final idToken = await _storage.read(key: 'idToken');
+    final apiPFUrl = dotenv.env['API_PF_URL'];
+
+    final Map<String, String> queryParameters = {};
+    if (year != null) {
+      queryParameters['year'] = year.toString();
+    }
+    if (month != null) {
+      queryParameters['month'] = month.toString();
+    }
+
+    final uri =
+        Uri.parse('$apiPFUrl/profiles/$profileId/journal/$accountId/all')
+            .replace(
+                queryParameters:
+                    queryParameters.isEmpty ? null : queryParameters);
+
+    final response = await http.get(
+      uri,
+      headers: {
+        'Authorization': 'Bearer $idToken',
+      },
+    );
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    }  else if (response.statusCode == 404) {
+      return [];
+    } else {
+      final errorBody = jsonDecode(response.body);
+      throw Exception(
+          errorBody['message'] ?? 'Failed to load journal movements');
+    }
+  }
 }

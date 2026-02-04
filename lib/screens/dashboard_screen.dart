@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mifinper/models/account_data.dart';
 import 'package:mifinper/screens/list_accounts_screen.dart';
 import 'package:mifinper/screens/transactions/another_transaction.dart';
 import 'package:mifinper/services/utils_functions.dart';
@@ -97,9 +98,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           child: ListView.builder(
                             itemCount: _dashboardInformation.length,
                             itemBuilder: (context, index) {
-                              final account = _dashboardInformation[index];
+                              final account = Utils().setAccountData(
+                                _dashboardInformation[index]);
                               final balance =
-                                  num.tryParse(account['balance'].toString()) ??
+                                  num.tryParse(account.balance.toString()) ??
                                       0;
                               final bool isPositive = Utils()
                                   .checkPositiveBalance(account, balance);
@@ -121,7 +123,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                     ),
                                   ),
                                   title: Text(
-                                    account['name'],
+                                    account.name,
                                     style: const TextStyle(
                                         fontWeight: FontWeight.bold),
                                   ),
@@ -130,7 +132,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                     crossAxisAlignment:
                                         CrossAxisAlignment.start,
                                     children: [
-                                      Text(account['code']),
+                                      Text(account.code),
                                       const SizedBox(height: 5),
                                       Text(
                                         'Value: ${Utils().formatCurrency(account, balance)}',
@@ -159,9 +161,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  void _navigateToListChildAccount(dynamic account) {
+  void _navigateToListChildAccount(AccountData account) {
     if (_selectedProfile != null) {
-      String parentCodeToPass = account['code'] + ".";
+      String parentCodeToPass = account.code + ".";
       Navigator.push(
         context,
         MaterialPageRoute(

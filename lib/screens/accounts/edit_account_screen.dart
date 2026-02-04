@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mifinper/screens/transactions/list_transactions_screen.dart';
 import 'package:mifinper/screens/transactions/transaction_screen.dart';
 import 'package:mifinper/services/api_service.dart';
 import 'package:mifinper/services/utils_functions.dart';
@@ -198,6 +199,23 @@ class _EditAccountScreenState extends State<EditAccountScreen> {
                             child: const Text('Add a transaction'),
                           ),
                         ),
+                      const SizedBox(height: 20),
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton(
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => ListTransactionsScreen(
+                                  accountId: _accountId,
+                                ),
+                              ),
+                            );
+                          },
+                          child: const Text('See Transactions'),
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -216,7 +234,8 @@ class _EditAccountScreenState extends State<EditAccountScreen> {
 
     // 3. Solo aplicamos la lógica de color si es un campo numérico Y el valor es un número válido
     if (isNumber && doubleValue != null) {
-      final bool isPositive = Utils().checkPositiveBalance(_accountDetail, doubleValue);
+      final bool isPositive = Utils().checkPositiveBalance(
+        Utils().setAccountData(_accountDetail), doubleValue);
       dynamicColor = isPositive ? Colors.blue : Colors.red;
     }
 
