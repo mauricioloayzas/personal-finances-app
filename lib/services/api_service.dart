@@ -123,9 +123,9 @@ class ApiService {
   Future<Map<String, dynamic>> getAccountProfileDetails(
       String profileId, String accountId) async {
     final idToken = await _storage.read(key: 'idToken');
-    final apiOrchestratorUrl = dotenv.env['API_ORCHESTRATOR_URL'];
+    final apiPFUrl = dotenv.env['API_PF_URL'];
     final response = await http.get(
-      Uri.parse('$apiOrchestratorUrl/profiles/$profileId/accounts/$accountId'),
+      Uri.parse('$apiPFUrl/profiles/$profileId/accounts/$accountId'),
       headers: {
         'Authorization': 'Bearer $idToken',
       },
@@ -141,11 +141,11 @@ class ApiService {
   Future<Map<String, dynamic>> getAccountProfileDetailsByCode(
       String profileId, String accountCode) async {
     final idToken = await _storage.read(key: 'idToken');
-    final apiOrchestratorUrl = dotenv.env['API_ORCHESTRATOR_URL'];
+    final apiPFUrl = dotenv.env['API_PF_URL'];
     accountCode = accountCode.replaceAll(".", "-");
     final response = await http.get(
       Uri.parse(
-          '$apiOrchestratorUrl/profiles/$profileId/accounts/code/$accountCode'),
+          '$apiPFUrl/profiles/$profileId/accounts/code/$accountCode'),
       headers: {
         'Authorization': 'Bearer $idToken',
       },
