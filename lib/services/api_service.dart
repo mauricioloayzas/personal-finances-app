@@ -40,6 +40,45 @@ class ApiService {
     }
   }
 
+  Future<Map<String, dynamic>> registerUser(String name, String email, String password) async {
+    final response = await http.post(
+      Uri.parse('${dotenv.env['API_ORCHESTRATOR_URL']}/auth/register'),
+      headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+      },
+      body: jsonEncode(<String, String>{
+        'name': name,
+        'email': email,
+        'password': password,
+      }),
+    );
+
+    if (response.statusCode == 201) {
+      return {'success': true, 'data': jsonDecode(response.body)};
+    } else {
+      return {'success': false, 'message': 'Failed to register user'};
+    }
+  }
+
+  Future<Map<String, dynamic>> confirmUser(String email, String confirmationCode) async {
+    final response = await http.post(
+      Uri.parse('${dotenv.env['API_ORCHESTRATOR_URL']}/auth/confirm-user'),
+      headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+      },
+      body: jsonEncode(<String, String>{
+        'email': email,
+        'confirmationCode': confirmationCode,
+      }),
+    );
+
+    if (response.statusCode == 200) {
+      return {'success': true, 'data': jsonDecode(response.body)};
+    } else {
+      return {'success': false, 'message': 'Failed to confirm user'};
+    }
+  }
+
   Future<List<dynamic>> fetchProfiles() async {
     final idToken = await _storage.read(key: 'idToken');
     final sub = await _storage.read(key: 'sub');

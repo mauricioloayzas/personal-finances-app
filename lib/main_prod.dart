@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:mifinper/screens/dashboard_screen.dart';
-import 'package:mifinper/screens/login_screen.dart';
-import 'package:mifinper/screens/signup_screen.dart';
+import 'package:mifinper/screens/authorization/login_screen.dart';
+import 'package:mifinper/screens/authorization/register_screen.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 Future<void> main() async {
@@ -29,7 +29,7 @@ class MyApp extends StatelessWidget {
       // 2. Definimos todas las rutas (pantallas) disponibles
       routes: {
         '/login': (context) => const LoginScreen(),
-        '/signup': (context) => const SignUpScreen(),
+        '/signup': (context) => const RegisterScreen(),
         '/dashboard': (context) => const DashboardScreen(),
       },
     );
