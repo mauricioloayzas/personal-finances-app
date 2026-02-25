@@ -6,6 +6,8 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:mifinper/models/journal_entry.dart';
 import 'package:http/http.dart' as http;
 
+import '../../core/enums.dart';
+
 class ApiService {
   final _storage = const FlutterSecureStorage();
 
@@ -40,7 +42,8 @@ class ApiService {
     }
   }
 
-  Future<Map<String, dynamic>> registerUser(String name, String email, String password) async {
+  Future<Map<String, dynamic>> registerUser(
+      String name, String email, String password) async {
     final response = await http.post(
       Uri.parse('${dotenv.env['API_ORCHESTRATOR_URL']}/auth/register'),
       headers: <String, String>{
@@ -60,7 +63,8 @@ class ApiService {
     }
   }
 
-  Future<Map<String, dynamic>> confirmUser(String email, String confirmationCode) async {
+  Future<Map<String, dynamic>> confirmUser(
+      String email, String confirmationCode) async {
     final response = await http.post(
       Uri.parse('${dotenv.env['API_ORCHESTRATOR_URL']}/auth/confirm-user'),
       headers: <String, String>{
@@ -76,6 +80,81 @@ class ApiService {
       return {'success': true, 'data': jsonDecode(response.body)};
     } else {
       return {'success': false, 'message': 'Failed to confirm user'};
+    }
+  }
+
+  Future<Map<String, dynamic>> _fetchProfileDetails(String profileId) async {
+    final idToken = await _storage.read(key: 'idToken');
+    final apiOrchestratorUrl = dotenv.env['API_ORCHESTRATOR_URL'];
+    final response = await http.get(
+      Uri.parse('$apiOrchestratorUrl/profiles/$profileId'),
+      headers: {
+        'Authorization': 'Bearer $idToken',
+      },
+    );
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    } else {
+      throw Exception('Failed to load profile details');
+    }
+  }
+
+  Future<Map<String, dynamic>> createProfile(String name, String email) async {
+    final profileId = dotenv.env['SERVICE_PROFILE_ID'];
+    final idToken = await _storage.read(key: 'idToken');
+    final apiOrchestratorUrl = dotenv.env['API_ORCHESTRATOR_URL'];
+    final urlEndpoint = '$apiOrchestratorUrl/profiles/$profileId/children';
+
+    final payload = {
+      'name': name,
+      'email': email,
+      'type': ProfileType.person.name,
+    };
+
+    final response = await http.post(
+      Uri.parse(urlEndpoint),
+      headers: {
+        'Authorization': 'Bearer $idToken',
+        'Content-Type': 'application/json; charset=UTF-8',
+      },
+      body: json.encode(payload),
+    );
+
+    if (response.statusCode == 201) {
+      return jsonDecode(response.body);
+    } else {
+      final errorBody = jsonDecode(response.body);
+      throw Exception(errorBody['message'] ?? 'Failed to create profile');
+    }
+  }
+
+  Future<Map<String, dynamic>> createRbac(
+      String profileId, String userId) async {
+    final idToken = await _storage.read(key: 'idToken');
+    final apiOrchestratorUrl = dotenv.env['API_ORCHESTRATOR_URL'];
+    final urlEndpoint = '$apiOrchestratorUrl/profiles/$profileId/rbac';
+
+    final payload = {
+      'application_id': dotenv.env['APLICATION_ID'],
+      'role_id': dotenv.env['ROLE_ID'],
+      'user_id': userId,
+    };
+
+    final response = await http.post(
+      Uri.parse(urlEndpoint),
+      headers: {
+        'Authorization': 'Bearer $idToken',
+        'Content-Type': 'application/json; charset=UTF-8',
+      },
+      body: json.encode(payload),
+    );
+
+    if (response.statusCode == 201) {
+      return jsonDecode(response.body);
+    } else {
+      final errorBody = jsonDecode(response.body);
+      throw Exception(errorBody['message'] ?? 'Failed to create rbac');
     }
   }
 
@@ -100,25 +179,7 @@ class ApiService {
       );
       return profileDetails;
     } else {
-      final errorBody = jsonDecode(response.body);
-      throw Exception(errorBody['message'] ?? 'Failed to load profiles');
-    }
-  }
-
-  Future<Map<String, dynamic>> _fetchProfileDetails(String profileId) async {
-    final idToken = await _storage.read(key: 'idToken');
-    final apiOrchestratorUrl = dotenv.env['API_ORCHESTRATOR_URL'];
-    final response = await http.get(
-      Uri.parse('$apiOrchestratorUrl/profiles/$profileId'),
-      headers: {
-        'Authorization': 'Bearer $idToken',
-      },
-    );
-
-    if (response.statusCode == 200) {
-      return jsonDecode(response.body);
-    } else {
-      throw Exception('Failed to load profile details');
+      return [];
     }
   }
 
@@ -177,14 +238,34 @@ class ApiService {
     }
   }
 
+  Future<Map<String, dynamic>> initProfileAccounts(String profileId) async {
+    final idToken = await _storage.read(key: 'idToken');
+    final apiPFUrl = dotenv.env['API_PF_URL'];
+
+    final response = await http.get(
+      Uri.parse('$apiPFUrl/profiles/$profileId/accounts/init'),
+      headers: {
+        'Authorization': 'Bearer $idToken',
+        'Content-Type': 'application/json; charset=UTF-8',
+      },
+    );
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    } else {
+      final errorBody = jsonDecode(response.body);
+      throw Exception(
+          errorBody['message'] ?? 'Failed to initialize profile accounts');
+    }
+  }
+
   Future<Map<String, dynamic>> getAccountProfileDetailsByCode(
       String profileId, String accountCode) async {
     final idToken = await _storage.read(key: 'idToken');
     final apiPFUrl = dotenv.env['API_PF_URL'];
     accountCode = accountCode.replaceAll(".", "-");
     final response = await http.get(
-      Uri.parse(
-          '$apiPFUrl/profiles/$profileId/accounts/code/$accountCode'),
+      Uri.parse('$apiPFUrl/profiles/$profileId/accounts/code/$accountCode'),
       headers: {
         'Authorization': 'Bearer $idToken',
       },
@@ -345,7 +426,7 @@ class ApiService {
 
     if (response.statusCode == 200) {
       return jsonDecode(response.body);
-    }  else if (response.statusCode == 404) {
+    } else if (response.statusCode == 404) {
       return [];
     } else {
       final errorBody = jsonDecode(response.body);

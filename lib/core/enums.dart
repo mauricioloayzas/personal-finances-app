@@ -1,3 +1,8 @@
+enum ProfileType {
+  person,
+  service
+}
+
 enum AccountType {
   asset,
   liability,

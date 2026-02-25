@@ -25,8 +25,14 @@ class _LoginScreenState extends State<LoginScreen> {
         _passwordController.text,
       );
 
+      final profiles = await _apiService.fetchProfiles();
+
       if (mounted) {
-        Navigator.pushReplacementNamed(context, '/dashboard');
+        if (profiles.isEmpty) {
+          Navigator.pushReplacementNamed(context, '/create-profile');
+        } else {
+          Navigator.pushReplacementNamed(context, '/dashboard');
+        }
       }
     } catch (e) {
       if (mounted) {
