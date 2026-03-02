@@ -95,69 +95,82 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           ),
                         ),
                         Expanded(
-                          child: ListView.builder(
-                            itemCount: _dashboardInformation.length,
-                            itemBuilder: (context, index) {
-                              final account = Utils().setAccountData(
-                                _dashboardInformation[index]);
-                              final balance =
-                                  num.tryParse(account.balance.toString()) ??
-                                      0;
-                              final bool isPositive = Utils()
-                                  .checkPositiveBalance(account, balance);
-
-                              return Card(
-                                margin: const EdgeInsets.symmetric(
-                                    horizontal: 8, vertical: 4),
-                                child: ListTile(
-                                  leading: CircleAvatar(
-                                    backgroundColor: isPositive
-                                        ? Colors.blue.shade100
-                                        : Colors.red.shade100,
-                                    child: Icon(
-                                      balance >= 0
-                                          ? Icons.account_balance_wallet
-                                          : Icons.warning_amber_rounded,
-                                      color:
-                                          isPositive ? Colors.blue : Colors.red,
-                                    ),
+                          child: LayoutBuilder(
+                            builder: (context, constraints) {
+                              // Use a GridView for wider screens, ListView for narrower ones
+                              if (constraints.maxWidth > 600) {
+                                return GridView.builder(
+                                  itemCount: _dashboardInformation.length,
+                                  gridDelegate:
+                                      const SliverGridDelegateWithFixedCrossAxisCount(
+                                    crossAxisCount: 2,
+                                    childAspectRatio: 3.5, // Adjust aspect ratio for better layout
                                   ),
-                                  title: Text(
-                                    account.name,
-                                    style: const TextStyle(
-                                        fontWeight: FontWeight.bold),
-                                  ),
-                                  // OPCIÓN 2: Balance anidado en el subtitle
-                                  subtitle: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(account.code),
-                                      const SizedBox(height: 5),
-                                      Text(
-                                        'Value: ${Utils().formatCurrency(account, balance)}',
-                                        style: TextStyle(
-                                          fontSize: 15,
-                                          fontWeight: FontWeight.w600,
-                                          color: isPositive
-                                              ? Colors.blue.shade700
-                                              : Colors.red.shade700,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                  trailing: TextButton(
-                                    child: const Text('Edit'),
-                                    onPressed: () =>
-                                        _navigateToListChildAccount(account),
-                                  ),
-                                ),
-                              );
+                                  itemBuilder: (context, index) {
+                                    final account = Utils().setAccountData(
+                                        _dashboardInformation[index]);
+                                    return _buildAccountCard(account);
+                                  },
+                                );
+                              } else {
+                                return ListView.builder(
+                                  itemCount: _dashboardInformation.length,
+                                  itemBuilder: (context, index) {
+                                    final account = Utils().setAccountData(
+                                        _dashboardInformation[index]);
+                                    return _buildAccountCard(account);
+                                  },
+                                );
+                              }
                             },
                           ),
-                        )
+                        ),
                       ],
                     ),
+    );
+  }
+
+  Widget _buildAccountCard(AccountData account) {
+    final balance = num.tryParse(account.balance.toString()) ?? 0;
+    final bool isPositive = Utils().checkPositiveBalance(account, balance);
+
+    return Card(
+      margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      child: ListTile(
+        leading: CircleAvatar(
+          backgroundColor:
+              isPositive ? Colors.blue.shade100 : Colors.red.shade100,
+          child: Icon(
+            balance >= 0
+                ? Icons.account_balance_wallet
+                : Icons.warning_amber_rounded,
+            color: isPositive ? Colors.blue : Colors.red,
+          ),
+        ),
+        title: Text(
+          account.name,
+          style: const TextStyle(fontWeight: FontWeight.bold),
+        ),
+        subtitle: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(account.code),
+            const SizedBox(height: 5),
+            Text(
+              'Value: ${Utils().formatCurrency(account, balance)}',
+              style: TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w600,
+                color: isPositive ? Colors.blue.shade700 : Colors.red.shade700,
+              ),
+            ),
+          ],
+        ),
+        trailing: TextButton(
+          child: const Text('Edit'),
+          onPressed: () => _navigateToListChildAccount(account),
+        ),
+      ),
     );
   }
 

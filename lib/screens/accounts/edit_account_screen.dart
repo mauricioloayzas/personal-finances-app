@@ -139,87 +139,105 @@ class _EditAccountScreenState extends State<EditAccountScreen> {
       ),
       child: _isLoading
           ? const Center(child: CircularProgressIndicator())
-          : Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Form(
-                key: _formKey,
-                child: SingleChildScrollView(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text('Edit Account',
-                          style: TextStyle(
-                              fontSize: 24, fontWeight: FontWeight.bold)),
-                      const SizedBox(height: 20),
-                      _buildTextField(_nameController, 'Name'),
-                      const SizedBox(height: 20),
-                      _buildTextField(_descriptionController, 'Description'),
-                      const SizedBox(height: 20),
-                      _buildTextField(_balanceValueController, 'Balance',
-                          isNumber: true,
-                          enabledField:
-                              !_isBalanceFieldVisible && _canBeAdjusted),
-                      const SizedBox(height: 20),
-                      Visibility(
-                        visible: _isBalanceFieldVisible && _canBeAdjusted,
-                        child: _buildTextField(
-                            _newBalanceValueController, 'Adjust',
-                            isNumber: true),
-                      ),
-                      const SizedBox(height: 20),
-                      if (_isCreating)
-                        const Center(child: CircularProgressIndicator())
-                      else
-                        SizedBox(
-                          width: double.infinity,
-                          child: ElevatedButton(
-                            onPressed: _editAccount,
-                            child: const Text('Save Changes'),
-                          ),
-                        ),
-                      const SizedBox(height: 20),
-                      if (_canBePaid)
-                        SizedBox(
-                          width: double.infinity,
-                          child: ElevatedButton(
-                            onPressed: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => TransactionScreen(
-                                    profileId: widget.profileId,
-                                    accountId: _accountId,
-                                    onlyCash: _canBePaidOnlyCash,
+          : LayoutBuilder(
+              builder: (context, constraints) {
+                return Center(
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(
+                      maxWidth:
+                          constraints.maxWidth > 600 ? 600 : constraints.maxWidth,
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: Form(
+                        key: _formKey,
+                        child: SingleChildScrollView(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text('Edit Account',
+                                  style: TextStyle(
+                                      fontSize: 24,
+                                      fontWeight: FontWeight.bold)),
+                              const SizedBox(height: 20),
+                              _buildTextField(_nameController, 'Name'),
+                              const SizedBox(height: 20),
+                              _buildTextField(
+                                  _descriptionController, 'Description'),
+                              const SizedBox(height: 20),
+                              _buildTextField(
+                                  _balanceValueController, 'Balance',
+                                  isNumber: true,
+                                  enabledField: !_isBalanceFieldVisible &&
+                                      _canBeAdjusted),
+                              const SizedBox(height: 20),
+                              Visibility(
+                                visible:
+                                    _isBalanceFieldVisible && _canBeAdjusted,
+                                child: _buildTextField(
+                                    _newBalanceValueController, 'Adjust',
+                                    isNumber: true),
+                              ),
+                              const SizedBox(height: 20),
+                              if (_isCreating)
+                                const Center(child: CircularProgressIndicator())
+                              else
+                                SizedBox(
+                                  width: double.infinity,
+                                  child: ElevatedButton(
+                                    onPressed: _editAccount,
+                                    child: const Text('Save Changes'),
                                   ),
                                 ),
-                              ).then((_) async {
-                                await _loadAccountData();
-                              });
-                            },
-                            child: const Text('Add a transaction'),
-                          ),
-                        ),
-                      const SizedBox(height: 20),
-                      SizedBox(
-                        width: double.infinity,
-                        child: ElevatedButton(
-                          onPressed: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => ListTransactionsScreen(
-                                  accountId: _accountId,
+                              const SizedBox(height: 20),
+                              if (_canBePaid)
+                                SizedBox(
+                                  width: double.infinity,
+                                  child: ElevatedButton(
+                                    onPressed: () {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) =>
+                                              TransactionScreen(
+                                            profileId: widget.profileId,
+                                            accountId: _accountId,
+                                            onlyCash: _canBePaidOnlyCash,
+                                          ),
+                                        ),
+                                      ).then((_) async {
+                                        await _loadAccountData();
+                                      });
+                                    },
+                                    child: const Text('Add a transaction'),
+                                  ),
+                                ),
+                              const SizedBox(height: 20),
+                              SizedBox(
+                                width: double.infinity,
+                                child: ElevatedButton(
+                                  onPressed: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) =>
+                                            ListTransactionsScreen(
+                                          accountId: _accountId,
+                                        ),
+                                      ),
+                                    );
+                                  },
+                                  child: const Text('See Transactions'),
                                 ),
                               ),
-                            );
-                          },
-                          child: const Text('See Transactions'),
+                            ],
+                          ),
                         ),
                       ),
-                    ],
+                    ),
                   ),
-                ),
-              ),
+                );
+              },
             ),
     );
   }

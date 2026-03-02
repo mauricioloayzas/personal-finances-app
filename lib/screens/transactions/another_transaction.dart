@@ -122,64 +122,78 @@ class _AnotherTransactionState extends State<AnotherTransaction> {
       ),
       child: _isLoading
           ? const Center(child: CircularProgressIndicator())
-          : Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Form(
-                key: _formKey,
-                child: SingleChildScrollView(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'Crear Transaccion',
-                        style: TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const SizedBox(height: 20),
-                      _buildTextField(_descriptionController, 'Descripción'),
-                      const SizedBox(height: 20),
-                      _buildTextField(
-                        _valueController,
-                        'Valor de la transacción',
-                        isNumber: true,
-                      ),
-                      const SizedBox(height: 20),
-                      _buildAccountDropdown(
-                        'Cuenta de Débito',
-                        _selectedDebitAccount,
-                        (newValue) {
-                          setState(() {
-                            _selectedDebitAccount = newValue;
-                          });
-                        },
-                      ),
-                      const SizedBox(height: 20),
-                      _buildAccountDropdown(
-                        'Cuenta de Crédito',
-                        _selectedCreditAccount,
-                        (newValue) {
-                          setState(() {
-                            _selectedCreditAccount = newValue;
-                          });
-                        },
-                      ),
-                      const SizedBox(height: 20),
-                      if (_isCreating)
-                        const Center(child: CircularProgressIndicator())
-                      else
-                        SizedBox(
-                          width: double.infinity,
-                          child: ElevatedButton(
-                            onPressed: _saveTransaction,
-                            child: const Text('Guardar Transacción'),
+          : LayoutBuilder(
+              builder: (context, constraints) {
+                return Center(
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(
+                      maxWidth:
+                          constraints.maxWidth > 600 ? 600 : constraints.maxWidth,
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: Form(
+                        key: _formKey,
+                        child: SingleChildScrollView(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                'Crear Transaccion',
+                                style: TextStyle(
+                                  fontSize: 24,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              const SizedBox(height: 20),
+                              _buildTextField(
+                                  _descriptionController, 'Descripción'),
+                              const SizedBox(height: 20),
+                              _buildTextField(
+                                _valueController,
+                                'Valor de la transacción',
+                                isNumber: true,
+                              ),
+                              const SizedBox(height: 20),
+                              _buildAccountDropdown(
+                                'Cuenta de Débito',
+                                _selectedDebitAccount,
+                                (newValue) {
+                                  setState(() {
+                                    _selectedDebitAccount = newValue;
+                                  });
+                                },
+                              ),
+                              const SizedBox(height: 20),
+                              _buildAccountDropdown(
+                                'Cuenta de Crédito',
+                                _selectedCreditAccount,
+                                (newValue) {
+                                  setState(() {
+                                    _selectedCreditAccount = newValue;
+                                  });
+                                },
+                              ),
+                              const SizedBox(height: 20),
+                              if (_isCreating)
+                                const Center(
+                                    child: CircularProgressIndicator())
+                              else
+                                SizedBox(
+                                  width: double.infinity,
+                                  child: ElevatedButton(
+                                    onPressed: _saveTransaction,
+                                    child: const Text('Guardar Transacción'),
+                                  ),
+                                ),
+                            ],
                           ),
                         ),
-                    ],
+                      ),
+                    ),
                   ),
-                ),
-              ),
+                );
+              },
             ),
     );
   }

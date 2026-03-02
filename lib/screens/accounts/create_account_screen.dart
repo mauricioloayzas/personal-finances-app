@@ -93,75 +93,87 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
         onFetchingDashboardInformationChanged: (_) {},
         onSelectedProfileChanged: (_) {},
       ),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text('Create New Account',
-                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
-              const SizedBox(height: 20),
-              TextFormField(
-                controller: _nameController,
-                decoration: const InputDecoration(
-                  labelText: 'Name',
-                  border: OutlineInputBorder(),
-                ),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Please enter a name';
-                  }
-                  return null;
-                },
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          return Center(
+            child: ConstrainedBox(
+              constraints: BoxConstraints(
+                maxWidth: constraints.maxWidth > 600 ? 600 : constraints.maxWidth,
               ),
-              const SizedBox(height: 20),
-              TextFormField(
-                controller: _descriptionController,
-                decoration: const InputDecoration(
-                  labelText: 'Description',
-                  border: OutlineInputBorder(),
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Form(
+                  key: _formKey,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text('Create New Account',
+                          style: TextStyle(
+                              fontSize: 24, fontWeight: FontWeight.bold)),
+                      const SizedBox(height: 20),
+                      TextFormField(
+                        controller: _nameController,
+                        decoration: const InputDecoration(
+                          labelText: 'Name',
+                          border: OutlineInputBorder(),
+                        ),
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Please enter a name';
+                          }
+                          return null;
+                        },
+                      ),
+                      const SizedBox(height: 20),
+                      TextFormField(
+                        controller: _descriptionController,
+                        decoration: const InputDecoration(
+                          labelText: 'Description',
+                          border: OutlineInputBorder(),
+                        ),
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Please enter a description';
+                          }
+                          return null;
+                        },
+                      ),
+                      if (widget.parentCode == '2.1.02.') ...[
+                        const SizedBox(height: 20),
+                        CheckboxListTile(
+                          title: const Text('With Interest'),
+                          value: _withInterest,
+                          onChanged: (newValue) {
+                            setState(() {
+                              _withInterest = newValue!;
+                            });
+                          },
+                        ),
+                        CheckboxListTile(
+                          title: const Text('With Insurance'),
+                          value: _withInsurance,
+                          onChanged: (newValue) {
+                            setState(() {
+                              _withInsurance = newValue!;
+                            });
+                          },
+                        ),
+                      ],
+                      const SizedBox(height: 20),
+                      if (_isCreating)
+                        const Center(child: CircularProgressIndicator())
+                      else
+                        ElevatedButton(
+                          onPressed: _createAccount,
+                          child: const Text('Create Account'),
+                        ),
+                    ],
+                  ),
                 ),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Please enter a description';
-                  }
-                  return null;
-                },
               ),
-              if (widget.parentCode == '2.1.02.') ...[
-                const SizedBox(height: 20),
-                CheckboxListTile(
-                  title: const Text('With Interest'),
-                  value: _withInterest,
-                  onChanged: (newValue) {
-                    setState(() {
-                      _withInterest = newValue!;
-                    });
-                  },
-                ),
-                CheckboxListTile(
-                  title: const Text('With Insurance'),
-                  value: _withInsurance,
-                  onChanged: (newValue) {
-                    setState(() {
-                      _withInsurance = newValue!;
-                    });
-                  },
-                ),
-              ],
-              const SizedBox(height: 20),
-              if (_isCreating)
-                const Center(child: CircularProgressIndicator())
-              else
-                ElevatedButton(
-                  onPressed: _createAccount,
-                  child: const Text('Create Account'),
-                ),
-            ],
-          ),
-        ),
+            ),
+          );
+        },
       ),
     );
   }

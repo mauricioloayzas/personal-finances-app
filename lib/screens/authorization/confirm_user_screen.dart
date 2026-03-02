@@ -51,34 +51,46 @@ class _ConfirmUserScreenState extends State<ConfirmUserScreen> {
       appBar: AppBar(
         title: const Text('Confirm User'),
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Image.asset(
-              'assets/images/logo.png',
-              width: 300, // Ajusta el tamaño
-              height: 300,
-            ),
-            Text('Please enter the confirmation code sent to ${widget.email}'),
-            const SizedBox(height: 16.0),
-            TextField(
-              controller: _confirmationCodeController,
-              decoration: const InputDecoration(
-                labelText: 'Confirmation Code',
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          return Center(
+            child: ConstrainedBox(
+              constraints: BoxConstraints(
+                maxWidth: constraints.maxWidth > 600 ? 400 : constraints.maxWidth,
               ),
-              keyboardType: TextInputType.number,
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Image.asset(
+                      'assets/images/logo.png',
+                      width: 300, // Ajusta el tamaño
+                      height: 300,
+                    ),
+                    Text(
+                        'Please enter the confirmation code sent to ${widget.email}'),
+                    const SizedBox(height: 16.0),
+                    TextField(
+                      controller: _confirmationCodeController,
+                      decoration: const InputDecoration(
+                        labelText: 'Confirmation Code',
+                      ),
+                      keyboardType: TextInputType.number,
+                    ),
+                    const SizedBox(height: 32.0),
+                    _isLoading
+                        ? const CircularProgressIndicator()
+                        : ElevatedButton(
+                            onPressed: _confirmUser,
+                            child: const Text('Confirm'),
+                          ),
+                  ],
+                ),
+              ),
             ),
-            const SizedBox(height: 32.0),
-            _isLoading
-                ? const CircularProgressIndicator()
-                : ElevatedButton(
-                    onPressed: _confirmUser,
-                    child: const Text('Confirm'),
-                  ),
-          ],
-        ),
+          );
+        },
       ),
     );
   }

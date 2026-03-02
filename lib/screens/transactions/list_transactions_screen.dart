@@ -47,8 +47,12 @@ class _ListTransactionsScreenState extends State<ListTransactionsScreen> {
     setState(() {
       _isLoading = true;
     });
-    final transactions =
-        await _apiService.fetchJournalMovements(profile, widget.accountId);
+
+    DateTime ahora = DateTime.now();
+    int currentYear = ahora.year;
+    int currentMonth = ahora.month;
+    final transactions = await _apiService.fetchJournalMovements(
+        profile, widget.accountId, year: currentYear, month: currentMonth);
     if (mounted) {
       setState(() {
         _transactions = transactions;
@@ -103,92 +107,30 @@ class _ListTransactionsScreenState extends State<ListTransactionsScreen> {
                     _transactions.isEmpty
                         ? const Center(child: Text('No transactions yet.'))
                         : Expanded(
-                            child: ListView.builder(
-                              itemCount: _transactions.length,
-                              itemBuilder: (context, index) {
-                                final transaction = _transactions[index];
-                                num amount = 0;
-                                bool isPositive = false;
-
-                                final details =
-                                    transaction['details'] as List<dynamic>?;
-                                if (details != null) {
-                                  final detail = details.firstWhere(
-                                    (d) =>
-                                        d['account_id'].toString() ==
-                                        widget.accountId,
-                                    orElse: () => null,
+                            child: LayoutBuilder(
+                              builder: (context, constraints) {
+                                if (constraints.maxWidth > 600) {
+                                  return GridView.builder(
+                                    itemCount: _transactions.length,
+                                    gridDelegate:
+                                        const SliverGridDelegateWithFixedCrossAxisCount(
+                                      crossAxisCount: 2,
+                                      childAspectRatio: 3.5,
+                                    ),
+                                    itemBuilder: (context, index) {
+                                      return _buildTransactionCard(
+                                          _transactions[index]);
+                                    },
                                   );
-
-                                  if (detail != null) {
-                                    final creditValue = num.tryParse(
-                                            detail['credit_value']
-                                                    ?.toString() ??
-                                                '0') ??
-                                        0;
-                                    final debitValue = num.tryParse(
-                                            detail['debit_value']?.toString() ??
-                                                '0') ??
-                                        0;
-                                    bool isDebit = true;
-                                    if (debitValue > 0) {
-                                      amount = debitValue;
-                                    } else {
-                                      amount = creditValue;
-                                      isDebit = !isDebit;
-                                    }
-
-                                    isPositive = Utils()
-                                        .checkPositiveBalanceInTransaction(
-                                            _accountData!.type,
-                                            amount,
-                                            isDebit);
-                                  }
+                                } else {
+                                  return ListView.builder(
+                                    itemCount: _transactions.length,
+                                    itemBuilder: (context, index) {
+                                      return _buildTransactionCard(
+                                          _transactions[index]);
+                                    },
+                                  );
                                 }
-
-                                return Card(
-                                  margin: const EdgeInsets.symmetric(
-                                      horizontal: 8, vertical: 4),
-                                  child: ListTile(
-                                    leading: CircleAvatar(
-                                      backgroundColor: !isPositive
-                                          ? Colors.red.shade100
-                                          : Colors.green.shade100,
-                                      child: Icon(
-                                        isPositive
-                                            ? Icons.arrow_downward
-                                            : Icons.arrow_upward,
-                                        color: !isPositive
-                                            ? Colors.red
-                                            : Colors.green,
-                                      ),
-                                    ),
-                                    title: Text(
-                                      transaction['description'],
-                                      style: const TextStyle(
-                                          fontWeight: FontWeight.bold),
-                                    ),
-                                    subtitle: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                            'Date: ${Utils().formatDate(transaction['date'])}'),
-                                        const SizedBox(height: 5),
-                                        Text(
-                                          'Amount: ${Utils().formatCurrencyFromNumber(amount)}',
-                                          style: TextStyle(
-                                            fontSize: 15,
-                                            fontWeight: FontWeight.w600,
-                                            color: !isPositive
-                                                ? Colors.red.shade700
-                                                : Colors.green.shade700,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                );
                               },
                             ),
                           ),
@@ -253,6 +195,70 @@ class _ListTransactionsScreenState extends State<ListTransactionsScreen> {
             },
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildTransactionCard(dynamic transaction) {
+    num amount = 0;
+    bool isPositive = false;
+
+    final details = transaction['details'] as List<dynamic>?;
+    if (details != null) {
+      final detail = details.firstWhere(
+        (d) => d['account_id'].toString() == widget.accountId,
+        orElse: () => null,
+      );
+
+      if (detail != null) {
+        final creditValue =
+            num.tryParse(detail['credit_value']?.toString() ?? '0') ?? 0;
+        final debitValue =
+            num.tryParse(detail['debit_value']?.toString() ?? '0') ?? 0;
+        bool isDebit = true;
+        if (debitValue > 0) {
+          amount = debitValue;
+        } else {
+          amount = creditValue;
+          isDebit = !isDebit;
+        }
+
+        isPositive = Utils().checkPositiveBalanceInTransaction(
+            _accountData!.type, amount, isDebit);
+      }
+    }
+
+    return Card(
+      margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      child: ListTile(
+        leading: CircleAvatar(
+          backgroundColor:
+              !isPositive ? Colors.red.shade100 : Colors.green.shade100,
+          child: Icon(
+            isPositive ? Icons.arrow_downward : Icons.arrow_upward,
+            color: !isPositive ? Colors.red : Colors.green,
+          ),
+        ),
+        title: Text(
+          transaction['description'],
+          style: const TextStyle(fontWeight: FontWeight.bold),
+        ),
+        subtitle: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Date: ${Utils().formatDate(transaction['date'])}'),
+            const SizedBox(height: 5),
+            Text(
+              'Amount: ${Utils().formatCurrencyFromNumber(amount)}',
+              style: TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w600,
+                color:
+                    !isPositive ? Colors.red.shade700 : Colors.green.shade700,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

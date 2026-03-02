@@ -93,37 +93,51 @@ class _CreateProfileScreenState extends State<CreateProfileScreen> {
       ),
       child: _isCreating
           ? const Center(child: CircularProgressIndicator())
-          : Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Form(
-                key: _formKey,
-                child: SingleChildScrollView(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'Crear Nuevo Perfil',
-                        style: TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
+          : LayoutBuilder(
+              builder: (context, constraints) {
+                return Center(
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(
+                      maxWidth:
+                          constraints.maxWidth > 600 ? 600 : constraints.maxWidth,
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: Form(
+                        key: _formKey,
+                        child: SingleChildScrollView(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                'Crear Nuevo Perfil',
+                                style: TextStyle(
+                                  fontSize: 24,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              const SizedBox(height: 20),
+                              _buildTextField(
+                                  _nameController, 'Nombre del Perfil'),
+                              const SizedBox(height: 20),
+                              _buildTextField(
+                                  _emailController, 'Email del Perfil'),
+                              const SizedBox(height: 20),
+                              SizedBox(
+                                width: double.infinity,
+                                child: ElevatedButton(
+                                  onPressed: _createProfileAndInitialize,
+                                  child: const Text('Crear Perfil'),
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
-                      const SizedBox(height: 20),
-                      _buildTextField(_nameController, 'Nombre del Perfil'),
-                      const SizedBox(height: 20),
-                      _buildTextField(_emailController, 'Email del Perfil'),
-                      const SizedBox(height: 20),
-                      SizedBox(
-                        width: double.infinity,
-                        child: ElevatedButton(
-                          onPressed: _createProfileAndInitialize,
-                          child: const Text('Crear Perfil'),
-                        ),
-                      ),
-                    ],
+                    ),
                   ),
-                ),
-              ),
+                );
+              },
             ),
     );
   }

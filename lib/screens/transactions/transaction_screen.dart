@@ -143,63 +143,80 @@ class _TransactionScreenState extends State<TransactionScreen> {
       ),
       child: _isLoading
           ? const Center(child: CircularProgressIndicator())
-          : Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Form(
-                key: _formKey,
-                child: SingleChildScrollView(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(titleWidget,
-                          style: const TextStyle(
-                              fontSize: 24, fontWeight: FontWeight.bold)),
-                      const SizedBox(height: 20),
-                      _buildTextField(_descriptionController, 'Description'),
-                      const SizedBox(height: 20),
-                      _buildTextField(
-                        _valueController,
-                        'Transaction value',
-                        isNumber: true,
-                      ),
-                      const SizedBox(height: 20),
-                      DropdownButtonFormField<String>(
-                        value: _selectedAccountToPaid,
-                        hint: const Text('Select account to paid'),
-                        onChanged: (String? newValue) {
-                          setState(() {
-                            _selectedAccountToPaid = newValue;
-                          });
-                        },
-                        items: _accountsToPaid
-                            .map<DropdownMenuItem<String>>((dynamic account) {
-                          return DropdownMenuItem<String>(
-                            value: account['id'],
-                            child: Text(account['name']),
-                          );
-                        }).toList(),
-                        validator: (value) =>
-                            value == null ? 'Please select an account' : null,
-                        decoration: const InputDecoration(
-                          border: OutlineInputBorder(),
-                        ),
-                      ),
-                      const SizedBox(height: 20),
-                      if (_isCreating)
-                        const Center(child: CircularProgressIndicator())
-                      else
-                        SizedBox(
-                          width: double.infinity,
-                          child: ElevatedButton(
-                            onPressed: _createTransaction,
-                            child: const Text('Save Transaction'),
+          : LayoutBuilder(
+              builder: (context, constraints) {
+                return Center(
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(
+                      maxWidth:
+                          constraints.maxWidth > 600 ? 600 : constraints.maxWidth,
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: Form(
+                        key: _formKey,
+                        child: SingleChildScrollView(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(titleWidget,
+                                  style: const TextStyle(
+                                      fontSize: 24,
+                                      fontWeight: FontWeight.bold)),
+                              const SizedBox(height: 20),
+                              _buildTextField(
+                                  _descriptionController, 'Description'),
+                              const SizedBox(height: 20),
+                              _buildTextField(
+                                _valueController,
+                                'Transaction value',
+                                isNumber: true,
+                              ),
+                              const SizedBox(height: 20),
+                              DropdownButtonFormField<String>(
+                                value: _selectedAccountToPaid,
+                                hint: const Text('Select account to paid'),
+                                onChanged: (String? newValue) {
+                                  setState(() {
+                                    _selectedAccountToPaid = newValue;
+                                  });
+                                },
+                                items: _accountsToPaid
+                                    .map<DropdownMenuItem<String>>(
+                                        (dynamic account) {
+                                  return DropdownMenuItem<String>(
+                                    value: account['id'],
+                                    child: Text(account['name']),
+                                  );
+                                }).toList(),
+                                validator: (value) => value == null
+                                    ? 'Please select an account'
+                                    : null,
+                                decoration: const InputDecoration(
+                                  border: OutlineInputBorder(),
+                                ),
+                              ),
+                              const SizedBox(height: 20),
+                              if (_isCreating)
+                                const Center(
+                                    child: CircularProgressIndicator())
+                              else
+                                SizedBox(
+                                  width: double.infinity,
+                                  child: ElevatedButton(
+                                    onPressed: _createTransaction,
+                                    child: const Text('Save Transaction'),
+                                  ),
+                                ),
+                              const SizedBox(height: 20),
+                            ],
                           ),
                         ),
-                      const SizedBox(height: 20),
-                    ],
+                      ),
+                    ),
                   ),
-                ),
-              ),
+                );
+              },
             ),
     );
   }

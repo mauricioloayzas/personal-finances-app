@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mifinper/models/account_data.dart';
 import 'package:mifinper/screens/accounts/create_account_screen.dart';
 import 'package:mifinper/screens/transactions/list_transactions_screen.dart';
 import 'package:mifinper/widgets/custom_app_bar.dart';
@@ -165,109 +166,116 @@ class _ListAccountsScreenState extends State<ListAccountsScreen> {
                     _accounts.isEmpty
                         ? const Center(child: Text('No accounts yet.'))
                         : Expanded(
-                            child: ListView.builder(
-                              itemCount: _accounts.length,
-                              itemBuilder: (context, index) {
-                                final account = Utils().setAccountData(_accounts[index]);
-                                final accountObject =
-                                    Utils().setAccountData(_accounts[index]);
-                                final balance = num.tryParse(
-                                        accountObject.balance.toString()) ??
-                                    0;
-                                final bool isPositive = Utils()
-                                    .checkPositiveBalance(account, balance);
-
-                                return Card(
-                                  margin: const EdgeInsets.symmetric(
-                                      horizontal: 8, vertical: 4),
-                                  child: ListTile(
-                                    leading: CircleAvatar(
-                                      backgroundColor: isPositive
-                                          ? Colors.blue.shade100
-                                          : Colors.red.shade100,
-                                      child: Icon(
-                                        balance >= 0
-                                            ? Icons.monetization_on
-                                            : Icons.money_off,
-                                        color: isPositive
-                                            ? Colors.blue
-                                            : Colors.red,
-                                      ),
+                            child: LayoutBuilder(
+                              builder: (context, constraints) {
+                                if (constraints.maxWidth > 600) {
+                                  return GridView.builder(
+                                    itemCount: _accounts.length,
+                                    gridDelegate:
+                                        const SliverGridDelegateWithFixedCrossAxisCount(
+                                      crossAxisCount: 2,
+                                      childAspectRatio: 3,
                                     ),
-                                    title: Text(
-                                      account.name,
-                                      style: const TextStyle(
-                                          fontWeight: FontWeight.bold),
-                                    ),
-                                    subtitle: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Text(account.description),
-                                        const SizedBox(height: 5),
-                                        Text(
-                                          'Balance: ${Utils().formatCurrency(account, balance)}',
-                                          style: TextStyle(
-                                            fontSize: 15,
-                                            fontWeight: FontWeight.w600,
-                                            color: isPositive
-                                                ? Colors.blue.shade700
-                                                : Colors.red.shade700,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                    trailing: TextButton(
-                                      child: Text(
-                                          !account.isFinal ? 'See' : 'Edit'),
-                                      onPressed: () {
-                                        if (_selectedProfile != null) {
-                                          if (!account.isFinal) {
-                                            String parentCodeToPass =
-                                                account.code + ".";
-                                            Navigator.push(
-                                              context,
-                                              MaterialPageRoute(
-                                                  builder: (context) =>
-                                                      ListAccountsScreen(
-                                                        accountParentCode:
-                                                            parentCodeToPass,
-                                                        isOnlyParent: true,
-                                                        isOnlyFinal: false,
-                                                      )),
-                                            );
-                                          } else {
-                                            Navigator.push(
-                                              context,
-                                              MaterialPageRoute(
-                                                builder: (context) =>
-                                                    ListTransactionsScreen(
-                                                  accountId: _accounts[index]['id'],
-                                                ),
-                                              ),
-                                            ).then((_) {
-                                              if (_selectedProfile != null) {
-                                                _getAccounts(_selectedProfile!);
-                                              }
-                                            });
-                                          }
-                                        } else {
-                                          ScaffoldMessenger.of(context)
-                                              .showSnackBar(
-                                            const SnackBar(
-                                                content: Text(
-                                                    'Please select a profile first.')),
-                                          );
-                                        }
-                                      },
-                                    ),
-                                  ),
-                                );
+                                    itemBuilder: (context, index) {
+                                      final account = Utils()
+                                          .setAccountData(_accounts[index]);
+                                      return _buildAccountCard(
+                                          account, index);
+                                    },
+                                  );
+                                } else {
+                                  return ListView.builder(
+                                    itemCount: _accounts.length,
+                                    itemBuilder: (context, index) {
+                                      final account = Utils()
+                                          .setAccountData(_accounts[index]);
+                                      return _buildAccountCard(
+                                          account, index);
+                                    },
+                                  );
+                                }
                               },
                             ),
                           ),
                   ],
                 ),
+    );
+  }
+
+  Widget _buildAccountCard(AccountData account, int index) {
+    final accountObject = Utils().setAccountData(_accounts[index]);
+    final balance = num.tryParse(accountObject.balance.toString()) ?? 0;
+    final bool isPositive = Utils().checkPositiveBalance(account, balance);
+
+    return Card(
+      margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      child: ListTile(
+        leading: CircleAvatar(
+          backgroundColor:
+              isPositive ? Colors.blue.shade100 : Colors.red.shade100,
+          child: Icon(
+            balance >= 0 ? Icons.monetization_on : Icons.money_off,
+            color: isPositive ? Colors.blue : Colors.red,
+          ),
+        ),
+        title: Text(
+          account.name,
+          style: const TextStyle(fontWeight: FontWeight.bold),
+        ),
+        subtitle: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(account.description),
+            const SizedBox(height: 5),
+            Text(
+              'Balance: ${Utils().formatCurrency(account, balance)}',
+              style: TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w600,
+                color:
+                    isPositive ? Colors.blue.shade700 : Colors.red.shade700,
+              ),
+            ),
+          ],
+        ),
+        trailing: TextButton(
+          child: Text(!account.isFinal ? 'See' : 'Edit'),
+          onPressed: () {
+            if (_selectedProfile != null) {
+              if (!account.isFinal) {
+                String parentCodeToPass = "${account.code}.";
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (context) => ListAccountsScreen(
+                            accountParentCode: parentCodeToPass,
+                            isOnlyParent: true,
+                            isOnlyFinal: false,
+                          )),
+                );
+              } else {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => ListTransactionsScreen(
+                      accountId: _accounts[index]['id'],
+                    ),
+                  ),
+                ).then((_) {
+                  if (_selectedProfile != null) {
+                    _getAccounts(_selectedProfile!);
+                  }
+                });
+              }
+            } else {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                    content: Text('Please select a profile first.')),
+              );
+            }
+          },
+        ),
+      ),
     );
   }
 }
