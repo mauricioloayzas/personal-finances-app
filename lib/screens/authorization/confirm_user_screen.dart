@@ -65,8 +65,8 @@ class _ConfirmUserScreenState extends State<ConfirmUserScreen> {
                   children: [
                     Image.asset(
                       'assets/images/logo.png',
-                      width: 300, // Ajusta el tamaño
-                      height: 300,
+                      width: 150, // Ajusta el tamaño
+                      height: 150,
                     ),
                     Text(
                         'Please enter the confirmation code sent to ${widget.email}'),

@@ -70,8 +70,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   children: [
                     Image.asset(
                       'assets/images/logo.png',
-                      width: 300, // Ajusta el tamaño
-                      height: 300,
+                      width: 150, // Ajusta el tamaño
+                      height: 150,
                     ),
                     TextField(
                       controller: _nameController,

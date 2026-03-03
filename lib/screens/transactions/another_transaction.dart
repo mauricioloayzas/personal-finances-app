@@ -105,6 +105,73 @@ class _AnotherTransactionState extends State<AnotherTransaction> {
     }
   }
 
+  void _showAccountSelector(
+    BuildContext context,
+    Function(String) onAccountSelected,
+  ) {
+    // A stateful builder is used to manage the search query state within the modal
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      builder: (BuildContext bc) {
+        String searchQuery = "";
+        return StatefulBuilder(
+          builder: (BuildContext context, StateSetter setStateModal) {
+            final filteredAccounts = _accounts.where((account) {
+              return account['name']
+                  .toLowerCase()
+                  .contains(searchQuery.toLowerCase());
+            }).toList();
+
+            return DraggableScrollableSheet(
+              expand: false,
+              initialChildSize: 0.5,
+              maxChildSize: 0.9,
+              builder:
+                  (BuildContext context, ScrollController scrollController) {
+                return Column(
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: TextField(
+                        onChanged: (value) {
+                          setStateModal(() {
+                            searchQuery = value;
+                          });
+                        },
+                        decoration: const InputDecoration(
+                          labelText: 'Search Accounts',
+                          prefixIcon: Icon(Icons.search),
+                          border: OutlineInputBorder(),
+                        ),
+                      ),
+                    ),
+                    Expanded(
+                      child: ListView.builder(
+                        controller: scrollController,
+                        itemCount: filteredAccounts.length,
+                        itemBuilder: (BuildContext context, int index) {
+                          final account = filteredAccounts[index];
+                          return ListTile(
+                            title: Text(account['name']),
+                            onTap: () {
+                              onAccountSelected(account['id']);
+                              Navigator.pop(context);
+                            },
+                          );
+                        },
+                      ),
+                    ),
+                  ],
+                );
+              },
+            );
+          },
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return MainLayout(
@@ -127,8 +194,9 @@ class _AnotherTransactionState extends State<AnotherTransaction> {
                 return Center(
                   child: ConstrainedBox(
                     constraints: BoxConstraints(
-                      maxWidth:
-                          constraints.maxWidth > 600 ? 600 : constraints.maxWidth,
+                      maxWidth: constraints.maxWidth > 600
+                          ? 600
+                          : constraints.maxWidth,
                     ),
                     child: Padding(
                       padding: const EdgeInsets.all(16.0),
@@ -155,29 +223,102 @@ class _AnotherTransactionState extends State<AnotherTransaction> {
                                 isNumber: true,
                               ),
                               const SizedBox(height: 20),
-                              _buildAccountDropdown(
-                                'Cuenta de Débito',
-                                _selectedDebitAccount,
-                                (newValue) {
-                                  setState(() {
-                                    _selectedDebitAccount = newValue;
-                                  });
+                              Builder(
+                                builder: (context) {
+                                  final isSmallScreen =
+                                      MediaQuery.of(context).size.width < 600;
+
+                                  if (isSmallScreen) {
+                                    // On small screens, show a field that opens a modal
+                                    return InkWell(
+                                      onTap: () => _showAccountSelector(context,
+                                          (accountId) {
+                                        setState(() {
+                                          _selectedDebitAccount = accountId;
+                                        });
+                                      }),
+                                      child: InputDecorator(
+                                        decoration: const InputDecoration(
+                                          labelText: 'Cuenta de Débito',
+                                          border: OutlineInputBorder(),
+                                        ),
+                                        child: Text(
+                                          _selectedDebitAccount == null
+                                              ? 'Seleccione una cuenta'
+                                              : _accounts.firstWhere(
+                                                  (acc) =>
+                                                      acc['id'] ==
+                                                      _selectedDebitAccount,
+                                                  orElse: () => {
+                                                        'name': 'Unknown'
+                                                      })['name'],
+                                        ),
+                                      ),
+                                    );
+                                  } else {
+                                    // On larger screens, use the standard dropdown
+                                    return _buildAccountDropdown(
+                                      'Cuenta de Débito',
+                                      _selectedDebitAccount,
+                                      (newValue) {
+                                        setState(() {
+                                          _selectedDebitAccount = newValue;
+                                        });
+                                      },
+                                    );
+                                  }
                                 },
                               ),
                               const SizedBox(height: 20),
-                              _buildAccountDropdown(
-                                'Cuenta de Crédito',
-                                _selectedCreditAccount,
-                                (newValue) {
-                                  setState(() {
-                                    _selectedCreditAccount = newValue;
-                                  });
+                              Builder(
+                                builder: (context) {
+                                  final isSmallScreen =
+                                      MediaQuery.of(context).size.width < 600;
+
+                                  if (isSmallScreen) {
+                                    // On small screens, show a field that opens a modal
+                                    return InkWell(
+                                      onTap: () => _showAccountSelector(context,
+                                          (accountId) {
+                                        setState(() {
+                                          _selectedCreditAccount = accountId;
+                                        });
+                                      }),
+                                      child: InputDecorator(
+                                        decoration: const InputDecoration(
+                                          labelText: 'Cuenta de Crédito',
+                                          border: OutlineInputBorder(),
+                                        ),
+                                        child: Text(
+                                          _selectedCreditAccount == null
+                                              ? 'Seleccione una cuenta'
+                                              : _accounts.firstWhere(
+                                                  (acc) =>
+                                                      acc['id'] ==
+                                                      _selectedCreditAccount,
+                                                  orElse: () => {
+                                                        'name': 'Unknown'
+                                                      })['name'],
+                                        ),
+                                      ),
+                                    );
+                                  } else {
+                                    // On larger screens, use the standard dropdown
+                                    return _buildAccountDropdown(
+                                      'Cuenta de Crédito',
+                                      _selectedCreditAccount,
+                                      (newValue) {
+                                        setState(() {
+                                          _selectedCreditAccount = newValue;
+                                        });
+                                      },
+                                    );
+                                  }
                                 },
                               ),
                               const SizedBox(height: 20),
                               if (_isCreating)
-                                const Center(
-                                    child: CircularProgressIndicator())
+                                const Center(child: CircularProgressIndicator())
                               else
                                 SizedBox(
                                   width: double.infinity,

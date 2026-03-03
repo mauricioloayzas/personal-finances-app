@@ -132,6 +132,72 @@ class _TransactionScreenState extends State<TransactionScreen> {
     }
   }
 
+  void _showAccountSelector(BuildContext context) {
+    // A stateful builder is used to manage the search query state within the modal
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      builder: (BuildContext bc) {
+        String searchQuery = "";
+        return StatefulBuilder(
+          builder: (BuildContext context, StateSetter setStateModal) {
+            final filteredAccounts = _accountsToPaid.where((account) {
+              return account['name']
+                  .toLowerCase()
+                  .contains(searchQuery.toLowerCase());
+            }).toList();
+
+            return DraggableScrollableSheet(
+              expand: false,
+              initialChildSize: 0.5,
+              maxChildSize: 0.9,
+              builder:
+                  (BuildContext context, ScrollController scrollController) {
+                return Column(
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: TextField(
+                        onChanged: (value) {
+                          setStateModal(() {
+                            searchQuery = value;
+                          });
+                        },
+                        decoration: const InputDecoration(
+                          labelText: 'Search Accounts',
+                          prefixIcon: Icon(Icons.search),
+                          border: OutlineInputBorder(),
+                        ),
+                      ),
+                    ),
+                    Expanded(
+                      child: ListView.builder(
+                        controller: scrollController,
+                        itemCount: filteredAccounts.length,
+                        itemBuilder: (BuildContext context, int index) {
+                          final account = filteredAccounts[index];
+                          return ListTile(
+                            title: Text(account['name']),
+                            onTap: () {
+                              setState(() {
+                                _selectedAccountToPaid = account['id'];
+                              });
+                              Navigator.pop(context);
+                            },
+                          );
+                        },
+                      ),
+                    ),
+                  ],
+                );
+              },
+            );
+          },
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final titleWidget = "Transaction to ${_account['name']}";
@@ -173,28 +239,60 @@ class _TransactionScreenState extends State<TransactionScreen> {
                                 isNumber: true,
                               ),
                               const SizedBox(height: 20),
-                              DropdownButtonFormField<String>(
-                                value: _selectedAccountToPaid,
-                                hint: const Text('Select account to paid'),
-                                onChanged: (String? newValue) {
-                                  setState(() {
-                                    _selectedAccountToPaid = newValue;
-                                  });
+                              Builder(
+                                builder: (context) {
+                                  final isSmallScreen =
+                                      MediaQuery.of(context).size.width < 600;
+
+                                  if (isSmallScreen) {
+                                    // On small screens, show a field that opens a modal
+                                    return InkWell(
+                                      onTap: () => _showAccountSelector(context),
+                                      child: InputDecorator(
+                                        decoration: const InputDecoration(
+                                          labelText: 'Select account to paid',
+                                          border: OutlineInputBorder(),
+                                        ),
+                                        child: Text(
+                                          _selectedAccountToPaid == null
+                                              ? 'Select an account'
+                                              : _accountsToPaid.firstWhere((acc) =>
+                                                          acc['id'] ==
+                                                          _selectedAccountToPaid,
+                                                      orElse: () => {
+                                                            'name': 'Unknown'
+                                                          })['name'],
+                                        ),
+                                      ),
+                                    );
+                                  } else {
+                                    // On larger screens, use the standard dropdown
+                                    return DropdownButtonFormField<String>(
+                                      value: _selectedAccountToPaid,
+                                      hint:
+                                          const Text('Select account to paid'),
+                                      onChanged: (String? newValue) {
+                                        setState(() {
+                                          _selectedAccountToPaid = newValue;
+                                        });
+                                      },
+                                      items: _accountsToPaid
+                                          .map<DropdownMenuItem<String>>(
+                                              (dynamic account) {
+                                        return DropdownMenuItem<String>(
+                                          value: account['id'],
+                                          child: Text(account['name']),
+                                        );
+                                      }).toList(),
+                                      validator: (value) => value == null
+                                          ? 'Please select an account'
+                                          : null,
+                                      decoration: const InputDecoration(
+                                        border: OutlineInputBorder(),
+                                      ),
+                                    );
+                                  }
                                 },
-                                items: _accountsToPaid
-                                    .map<DropdownMenuItem<String>>(
-                                        (dynamic account) {
-                                  return DropdownMenuItem<String>(
-                                    value: account['id'],
-                                    child: Text(account['name']),
-                                  );
-                                }).toList(),
-                                validator: (value) => value == null
-                                    ? 'Please select an account'
-                                    : null,
-                                decoration: const InputDecoration(
-                                  border: OutlineInputBorder(),
-                                ),
                               ),
                               const SizedBox(height: 20),
                               if (_isCreating)

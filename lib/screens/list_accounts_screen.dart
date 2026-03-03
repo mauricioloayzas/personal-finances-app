@@ -43,7 +43,7 @@ class _ListAccountsScreenState extends State<ListAccountsScreen> {
           await _apiService.getAccountProfileDetailsByCode(profile, parentCode);
       if (mounted) {
         setState(() {
-          _pageTitle = "Accounts in: ${parentAccount['name']}";
+          _pageTitle = "${parentAccount['name']}";
           _parentAccount = parentAccount;
         });
       }
@@ -89,7 +89,7 @@ class _ListAccountsScreenState extends State<ListAccountsScreen> {
               if (mounted) {
                 setState(() {
                   _accounts = [];
-                  _pageTitle = "Account in: ";
+                  _pageTitle = "";
                 });
               }
             }
@@ -114,7 +114,7 @@ class _ListAccountsScreenState extends State<ListAccountsScreen> {
                           Text(
                             _pageTitle,
                             style: const TextStyle(
-                                fontSize: 20, fontWeight: FontWeight.bold),
+                                fontSize: 15, fontWeight: FontWeight.bold),
                           ),
                           ElevatedButton.icon(
                             onPressed: () {
