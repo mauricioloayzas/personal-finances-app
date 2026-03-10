@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:mifinper/services/api_service.dart';
-import 'package:mifinper/screens/authorization/login_screen.dart'; // Assuming login_screen is in the same directory
+import 'package:mifinper/screens/authorization/login_screen.dart';
+import 'package:mifinper/widgets/custom_text_field.dart'; // Assuming login_screen is in the same directory
 
 class ConfirmUserScreen extends StatefulWidget {
   final String email;
@@ -69,21 +70,21 @@ class _ConfirmUserScreenState extends State<ConfirmUserScreen> {
                       height: 150,
                     ),
                     Text(
-                        'Please enter the confirmation code sent to ${widget.email}'),
+                        'Ingresa el código enviado a ${widget.email}'),
                     const SizedBox(height: 16.0),
-                    TextField(
+                    CustomTextField(
                       controller: _confirmationCodeController,
-                      decoration: const InputDecoration(
-                        labelText: 'Confirmation Code',
-                      ),
-                      keyboardType: TextInputType.number,
+                      label: 'Confirmar Código',
+                      isPassword: false,
+                      enabled: !_isLoading,
+                      isRequired: true,
                     ),
                     const SizedBox(height: 32.0),
                     _isLoading
                         ? const CircularProgressIndicator()
                         : ElevatedButton(
                             onPressed: _confirmUser,
-                            child: const Text('Confirm'),
+                            child: const Text('Confirmar'),
                           ),
                   ],
                 ),

@@ -113,8 +113,7 @@ class _ListAccountsScreenState extends State<ListAccountsScreen> {
                         children: [
                           Text(
                             _pageTitle,
-                            style: const TextStyle(
-                                fontSize: 15, fontWeight: FontWeight.bold),
+                            style: Theme.of(context).textTheme.displayLarge,
                           ),
                           ElevatedButton.icon(
                             onPressed: () {

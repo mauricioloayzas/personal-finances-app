@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:mifinper/core/enums.dart';
 import 'package:mifinper/models/journal_entry.dart';
 import 'package:mifinper/services/api_service.dart';
+import 'package:mifinper/widgets/custom_account_selector.dart';
 import 'package:mifinper/widgets/custom_app_bar.dart';
+import 'package:mifinper/widgets/custom_text_field.dart';
 import 'package:mifinper/widgets/main_layout.dart';
 
 class TransactionScreen extends StatefulWidget {
@@ -22,7 +24,6 @@ class TransactionScreen extends StatefulWidget {
 }
 
 class _TransactionScreenState extends State<TransactionScreen> {
-  final _formKey = GlobalKey<FormState>();
   final _descriptionController = TextEditingController();
   final _valueController = TextEditingController();
   final _apiService = ApiService();
@@ -52,10 +53,8 @@ class _TransactionScreenState extends State<TransactionScreen> {
       List<dynamic> accountsToPaid = await _apiService.fetchAccounts(
           widget.profileId, "1.1.01",
           isOnlyParent: false, isOnlyFinal: true);
-      if (
-        account['type'] != AccountType.liability.name && 
-        account['type'] != AccountType.income.name
-      ) {
+      if (account['type'] != AccountType.liability.name &&
+          account['type'] != AccountType.income.name) {
         List<dynamic> creditcardAccounts = await _apiService.fetchAccounts(
             widget.profileId, "2.1.01",
             isOnlyParent: false, isOnlyFinal: true);
@@ -78,8 +77,6 @@ class _TransactionScreenState extends State<TransactionScreen> {
   }
 
   Future<void> _createTransaction() async {
-    if (!_formKey.currentState!.validate()) return;
-
     setState(() => _isCreating = true);
 
     try {
@@ -214,101 +211,54 @@ class _TransactionScreenState extends State<TransactionScreen> {
                 return Center(
                   child: ConstrainedBox(
                     constraints: BoxConstraints(
-                      maxWidth:
-                          constraints.maxWidth > 600 ? 600 : constraints.maxWidth,
+                      maxWidth: constraints.maxWidth > 600
+                          ? 600
+                          : constraints.maxWidth,
                     ),
                     child: Padding(
                       padding: const EdgeInsets.all(16.0),
-                      child: Form(
-                        key: _formKey,
-                        child: SingleChildScrollView(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(titleWidget,
-                                  style: const TextStyle(
-                                      fontSize: 24,
-                                      fontWeight: FontWeight.bold)),
-                              const SizedBox(height: 20),
-                              _buildTextField(
-                                  _descriptionController, 'Description'),
-                              const SizedBox(height: 20),
-                              _buildTextField(
-                                _valueController,
-                                'Transaction value',
-                                isNumber: true,
-                              ),
-                              const SizedBox(height: 20),
-                              Builder(
-                                builder: (context) {
-                                  final isSmallScreen =
-                                      MediaQuery.of(context).size.width < 600;
-
-                                  if (isSmallScreen) {
-                                    // On small screens, show a field that opens a modal
-                                    return InkWell(
-                                      onTap: () => _showAccountSelector(context),
-                                      child: InputDecorator(
-                                        decoration: const InputDecoration(
-                                          labelText: 'Select account to paid',
-                                          border: OutlineInputBorder(),
-                                        ),
-                                        child: Text(
-                                          _selectedAccountToPaid == null
-                                              ? 'Select an account'
-                                              : _accountsToPaid.firstWhere((acc) =>
-                                                          acc['id'] ==
-                                                          _selectedAccountToPaid,
-                                                      orElse: () => {
-                                                            'name': 'Unknown'
-                                                          })['name'],
-                                        ),
-                                      ),
-                                    );
-                                  } else {
-                                    // On larger screens, use the standard dropdown
-                                    return DropdownButtonFormField<String>(
-                                      value: _selectedAccountToPaid,
-                                      hint:
-                                          const Text('Select account to paid'),
-                                      onChanged: (String? newValue) {
-                                        setState(() {
-                                          _selectedAccountToPaid = newValue;
-                                        });
-                                      },
-                                      items: _accountsToPaid
-                                          .map<DropdownMenuItem<String>>(
-                                              (dynamic account) {
-                                        return DropdownMenuItem<String>(
-                                          value: account['id'],
-                                          child: Text(account['name']),
-                                        );
-                                      }).toList(),
-                                      validator: (value) => value == null
-                                          ? 'Please select an account'
-                                          : null,
-                                      decoration: const InputDecoration(
-                                        border: OutlineInputBorder(),
-                                      ),
-                                    );
-                                  }
-                                },
-                              ),
-                              const SizedBox(height: 20),
-                              if (_isCreating)
-                                const Center(
-                                    child: CircularProgressIndicator())
-                              else
-                                SizedBox(
-                                  width: double.infinity,
-                                  child: ElevatedButton(
-                                    onPressed: _createTransaction,
-                                    child: const Text('Save Transaction'),
-                                  ),
+                      child: SingleChildScrollView(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(titleWidget,
+                                style:
+                                    Theme.of(context).textTheme.displayLarge),
+                            const SizedBox(height: 20),
+                            _buildTextField(
+                                _descriptionController, 'Description'),
+                            const SizedBox(height: 20),
+                            _buildTextField(
+                              _valueController,
+                              'Transaction value',
+                              isNumeric: true
+                            ),
+                            const SizedBox(height: 20),
+                            CustomAccountSelector(
+                              label: 'Selecciona una cuenta para pagar',
+                              accounts: _accountsToPaid,
+                              selectedAccountId: _selectedAccountToPaid,
+                              onChanged: (String? newValue) {
+                                setState(() {
+                                  _selectedAccountToPaid = newValue;
+                                });
+                              },
+                              onTapMobile: () => _showAccountSelector(context),
+                              validator: (value) => value == null ? 'Campo requerido' : null,
+                            ),
+                            const SizedBox(height: 20),
+                            if (_isCreating)
+                              const Center(child: CircularProgressIndicator())
+                            else
+                              SizedBox(
+                                width: double.infinity,
+                                child: ElevatedButton(
+                                  onPressed: _createTransaction,
+                                  child: const Text('Guardar Transacción'),
                                 ),
-                              const SizedBox(height: 20),
-                            ],
-                          ),
+                              ),
+                            const SizedBox(height: 20),
+                          ],
                         ),
                       ),
                     ),
@@ -320,57 +270,13 @@ class _TransactionScreenState extends State<TransactionScreen> {
   }
 
   Widget _buildTextField(TextEditingController controller, String label,
-      {bool isNumber = false, bool enabledField = true}) {
-    // 1. Intentamos parsear. Si no es un número, doubleValue será null.
-    final doubleValue = num.tryParse(controller.text);
-
-    // 2. Definimos el color como opcional (Color?)
-    Color? dynamicColor;
-
-    // 3. Solo aplicamos la lógica de color si es un campo numérico Y el valor es un número válido
-    if (isNumber && doubleValue != null) {
-      dynamicColor = doubleValue > 0 ? Colors.blue : Colors.red;
-    }
-
-    return TextFormField(
+      {bool enabledField = true, isNumeric = false}) {
+    return CustomTextField(
       enabled: enabledField,
       controller: controller,
-      // style controla el color del texto escrito
-      style: TextStyle(color: dynamicColor),
-      keyboardType: isNumber ? TextInputType.number : TextInputType.text,
-      decoration: InputDecoration(
-        labelText: label,
-        // labelStyle controla el color del texto de la etiqueta
-        labelStyle: TextStyle(color: dynamicColor),
-
-        // Bordes con lógica de "fallback" (si es null, usa un color neutro o el del tema)
-        enabledBorder: OutlineInputBorder(
-          borderSide: BorderSide(
-            color: dynamicColor ??
-                Colors.grey.shade400, // Color por defecto si no es número
-          ),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderSide: BorderSide(
-            color: dynamicColor ??
-                Theme.of(context)
-                    .primaryColor, // Color del tema si no es número
-            width: 2.0,
-          ),
-        ),
-        disabledBorder: OutlineInputBorder(
-          borderSide: BorderSide(
-            color: (dynamicColor ?? Colors.grey).withOpacity(0.5),
-          ),
-        ),
-        border: const OutlineInputBorder(),
-      ),
-      validator: (value) =>
-          (value == null || value.isEmpty) ? 'Required field' : null,
-      onChanged: (val) {
-        // Forzamos el redibujado para que el color cambie mientras el usuario escribe
-        if (isNumber) setState(() {});
-      },
+      label: label,
+      keyboardType: (!isNumeric) ? TextInputType.text : TextInputType.number,
+      isRequired: true,
     );
   }
 }

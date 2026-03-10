@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:mifinper/services/api_service.dart';
+import 'package:mifinper/widgets/custom_text_field.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -84,24 +85,20 @@ class _LoginScreenState extends State<LoginScreen> {
                       height: 150,
                     ),
                     const SizedBox(height: 30),
-                    TextField(
+                    CustomTextField(
                       controller: _emailController,
-                      decoration: const InputDecoration(
-                        labelText: 'Email',
-                        border: OutlineInputBorder(),
-                      ),
-                      keyboardType: TextInputType.emailAddress,
+                      label: 'Email',
+                      isPassword: false,
                       enabled: !_isLoading,
+                      isRequired: true,
                     ),
                     const SizedBox(height: 16),
-                    TextField(
+                    CustomTextField(
                       controller: _passwordController,
-                      decoration: const InputDecoration(
-                        labelText: 'Contraseña',
-                        border: OutlineInputBorder(),
-                      ),
-                      obscureText: true,
+                      label: 'Contraseña',
+                      isPassword: true,
                       enabled: !_isLoading,
+                      isRequired: true,
                     ),
                     const SizedBox(height: 24),
                     ElevatedButton(

@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:mifinper/models/journal_entry.dart';
 import 'package:mifinper/services/api_service.dart';
+import 'package:mifinper/widgets/custom_account_selector.dart';
 import 'package:mifinper/widgets/custom_app_bar.dart';
+import 'package:mifinper/widgets/custom_text_field.dart';
 import 'package:mifinper/widgets/main_layout.dart';
 
 class AnotherTransaction extends StatefulWidget {
@@ -14,7 +16,6 @@ class AnotherTransaction extends StatefulWidget {
 }
 
 class _AnotherTransactionState extends State<AnotherTransaction> {
-  final _formKey = GlobalKey<FormState>();
   final _descriptionController = TextEditingController();
   final _valueController = TextEditingController();
   final _apiService = ApiService();
@@ -61,8 +62,6 @@ class _AnotherTransactionState extends State<AnotherTransaction> {
   }
 
   Future<void> _saveTransaction() async {
-    if (!_formKey.currentState!.validate()) return;
-
     setState(() => _isCreating = true);
 
     try {
@@ -200,135 +199,68 @@ class _AnotherTransactionState extends State<AnotherTransaction> {
                     ),
                     child: Padding(
                       padding: const EdgeInsets.all(16.0),
-                      child: Form(
-                        key: _formKey,
-                        child: SingleChildScrollView(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Text(
-                                'Crear Transaccion',
-                                style: TextStyle(
-                                  fontSize: 24,
-                                  fontWeight: FontWeight.bold,
+                      child: SingleChildScrollView(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Crear Transaccion',
+                              style: Theme.of(context).textTheme.displayLarge,
+                            ),
+                            const SizedBox(height: 20),
+                            _buildTextField(_descriptionController, 'Descripción'),
+                            const SizedBox(height: 20),
+                            _buildTextField(
+                              _valueController,
+                              'Valor de la transacción',
+                              isNumeric: true
+                            ),
+                            const SizedBox(height: 20),
+                            CustomAccountSelector(
+                              label: 'Selecciona una cuenta debito',
+                              accounts: _accounts,
+                              selectedAccountId: _selectedDebitAccount,
+                              onChanged: (String? newValue) {
+                                setState(() {
+                                  _selectedDebitAccount = newValue;
+                                });
+                              },
+                              onTapMobile: () => _showAccountSelector(context, (accountId) {
+                                      setState(() {
+                                        _selectedCreditAccount = accountId;
+                                      });
+                                    }),
+                              validator: (value) => value == null ? 'Campo requerido' : null,
+                            ),
+                            const SizedBox(height: 20),
+                            CustomAccountSelector(
+                              label: 'Selecciona una cuenta debito',
+                              accounts: _accounts,
+                              selectedAccountId: _selectedCreditAccount,
+                              onChanged: (String? newValue) {
+                                setState(() {
+                                  _selectedCreditAccount = newValue;
+                                });
+                              },
+                              onTapMobile: () => _showAccountSelector(context, (accountId) {
+                                      setState(() {
+                                        _selectedCreditAccount = accountId;
+                                      });
+                                    }),
+                              validator: (value) => value == null ? 'Campo requerido' : null,
+                            ),
+                            const SizedBox(height: 20),
+                            if (_isCreating)
+                              const Center(child: CircularProgressIndicator())
+                            else
+                              SizedBox(
+                                width: double.infinity,
+                                child: ElevatedButton(
+                                  onPressed: _saveTransaction,
+                                  child: const Text('Guardar Transacción'),
                                 ),
                               ),
-                              const SizedBox(height: 20),
-                              _buildTextField(
-                                  _descriptionController, 'Descripción'),
-                              const SizedBox(height: 20),
-                              _buildTextField(
-                                _valueController,
-                                'Valor de la transacción',
-                                isNumber: true,
-                              ),
-                              const SizedBox(height: 20),
-                              Builder(
-                                builder: (context) {
-                                  final isSmallScreen =
-                                      MediaQuery.of(context).size.width < 600;
-
-                                  if (isSmallScreen) {
-                                    // On small screens, show a field that opens a modal
-                                    return InkWell(
-                                      onTap: () => _showAccountSelector(context,
-                                          (accountId) {
-                                        setState(() {
-                                          _selectedDebitAccount = accountId;
-                                        });
-                                      }),
-                                      child: InputDecorator(
-                                        decoration: const InputDecoration(
-                                          labelText: 'Cuenta de Débito',
-                                          border: OutlineInputBorder(),
-                                        ),
-                                        child: Text(
-                                          _selectedDebitAccount == null
-                                              ? 'Seleccione una cuenta'
-                                              : _accounts.firstWhere(
-                                                  (acc) =>
-                                                      acc['id'] ==
-                                                      _selectedDebitAccount,
-                                                  orElse: () => {
-                                                        'name': 'Unknown'
-                                                      })['name'],
-                                        ),
-                                      ),
-                                    );
-                                  } else {
-                                    // On larger screens, use the standard dropdown
-                                    return _buildAccountDropdown(
-                                      'Cuenta de Débito',
-                                      _selectedDebitAccount,
-                                      (newValue) {
-                                        setState(() {
-                                          _selectedDebitAccount = newValue;
-                                        });
-                                      },
-                                    );
-                                  }
-                                },
-                              ),
-                              const SizedBox(height: 20),
-                              Builder(
-                                builder: (context) {
-                                  final isSmallScreen =
-                                      MediaQuery.of(context).size.width < 600;
-
-                                  if (isSmallScreen) {
-                                    // On small screens, show a field that opens a modal
-                                    return InkWell(
-                                      onTap: () => _showAccountSelector(context,
-                                          (accountId) {
-                                        setState(() {
-                                          _selectedCreditAccount = accountId;
-                                        });
-                                      }),
-                                      child: InputDecorator(
-                                        decoration: const InputDecoration(
-                                          labelText: 'Cuenta de Crédito',
-                                          border: OutlineInputBorder(),
-                                        ),
-                                        child: Text(
-                                          _selectedCreditAccount == null
-                                              ? 'Seleccione una cuenta'
-                                              : _accounts.firstWhere(
-                                                  (acc) =>
-                                                      acc['id'] ==
-                                                      _selectedCreditAccount,
-                                                  orElse: () => {
-                                                        'name': 'Unknown'
-                                                      })['name'],
-                                        ),
-                                      ),
-                                    );
-                                  } else {
-                                    // On larger screens, use the standard dropdown
-                                    return _buildAccountDropdown(
-                                      'Cuenta de Crédito',
-                                      _selectedCreditAccount,
-                                      (newValue) {
-                                        setState(() {
-                                          _selectedCreditAccount = newValue;
-                                        });
-                                      },
-                                    );
-                                  }
-                                },
-                              ),
-                              const SizedBox(height: 20),
-                              if (_isCreating)
-                                const Center(child: CircularProgressIndicator())
-                              else
-                                SizedBox(
-                                  width: double.infinity,
-                                  child: ElevatedButton(
-                                    onPressed: _saveTransaction,
-                                    child: const Text('Guardar Transacción'),
-                                  ),
-                                ),
-                            ],
-                          ),
+                          ],
                         ),
                       ),
                     ),
@@ -339,40 +271,17 @@ class _AnotherTransactionState extends State<AnotherTransaction> {
     );
   }
 
-  Widget _buildTextField(TextEditingController controller, String label,
-      {bool isNumber = false}) {
-    return TextFormField(
-      controller: controller,
-      keyboardType: isNumber ? TextInputType.number : TextInputType.text,
-      decoration: InputDecoration(
-        labelText: label,
-        border: const OutlineInputBorder(),
-      ),
-      validator: (value) =>
-          (value == null || value.isEmpty) ? 'Campo requerido' : null,
-    );
-  }
-
-  Widget _buildAccountDropdown(
-    String hint,
-    String? selectedAccount,
-    void Function(String?) onChanged,
+  Widget _buildTextField(
+    TextEditingController controller,
+    String label,
+    {isNumeric = false}
   ) {
-    return DropdownButtonFormField<String>(
-      value: selectedAccount,
-      hint: Text(hint),
-      onChanged: onChanged,
-      items: _accounts.map<DropdownMenuItem<String>>((dynamic account) {
-        return DropdownMenuItem<String>(
-          value: account['id'],
-          child: Text(account['name']),
-        );
-      }).toList(),
-      validator: (value) =>
-          value == null ? 'Por favor seleccione una cuenta' : null,
-      decoration: const InputDecoration(
-        border: OutlineInputBorder(),
-      ),
+    return CustomTextField(
+      controller: controller,
+      label: label,
+      isPassword: false,
+      keyboardType: (!isNumeric) ? TextInputType.text : TextInputType.number,
+      isRequired: true,
     );
   }
 }

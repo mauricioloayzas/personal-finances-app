@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:mifinper/models/account_data.dart';
 import 'package:mifinper/services/api_service.dart';
 import 'package:mifinper/widgets/custom_app_bar.dart';
+import 'package:mifinper/widgets/custom_text_field.dart';
 import 'package:mifinper/widgets/main_layout.dart';
 
 class CreateAccountScreen extends StatefulWidget {
@@ -27,7 +28,6 @@ class CreateAccountScreen extends StatefulWidget {
 }
 
 class _CreateAccountScreenState extends State<CreateAccountScreen> {
-  final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
   final _descriptionController = TextEditingController();
   final _apiService = ApiService();
@@ -43,44 +43,42 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
   }
 
   Future<void> _createAccount() async {
-    if (_formKey.currentState!.validate()) {
-      setState(() {
-        _isCreating = true;
-      });
+    setState(() {
+      _isCreating = true;
+    });
 
-      try {
-        final accountPayload = AccountData(
-          name: _nameController.text,
-          description: _descriptionController.text,
-          code: widget.code,
-          nature: widget.accountNature,
-          type: widget.accountType,
-          isFinal: widget.isFinal,
-          balance: 0,
-          withInterest: _withInterest,
-          withInsurance: _withInsurance,
-        ).toJson();
+    try {
+      final accountPayload = AccountData(
+        name: _nameController.text,
+        description: _descriptionController.text,
+        code: widget.code,
+        nature: widget.accountNature,
+        type: widget.accountType,
+        isFinal: widget.isFinal,
+        balance: 0,
+        withInterest: _withInterest,
+        withInsurance: _withInsurance,
+      ).toJson();
 
-        await _apiService.createAccount(widget.profileId, accountPayload);
+      await _apiService.createAccount(widget.profileId, accountPayload);
 
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Account created successfully!')),
-          );
-          Navigator.pop(context);
-        }
-      } catch (e) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Failed to create account: $e')),
-          );
-        }
-      } finally {
-        if (mounted) {
-          setState(() {
-            _isCreating = false;
-          });
-        }
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Account created successfully!')),
+        );
+        Navigator.pop(context);
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to create account: $e')),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isCreating = false;
+        });
       }
     }
   }
@@ -102,73 +100,53 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
               ),
               child: Padding(
                 padding: const EdgeInsets.all(16.0),
-                child: Form(
-                  key: _formKey,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text('Create New Account',
-                          style: TextStyle(
-                              fontSize: 24, fontWeight: FontWeight.bold)),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Create New Account',
+                        style: Theme.of(context).textTheme.displayLarge),
+                    const SizedBox(height: 20),
+                    CustomTextField(
+                      controller: _nameController,
+                      label: 'Name',
+                      isRequired: true,
+                    ),
+                    const SizedBox(height: 20),
+                    CustomTextField(
+                      controller: _descriptionController,
+                      label: 'Description',
+                      isRequired: true,
+                    ),
+                    if (widget.parentCode == '2.1.02.') ...[
                       const SizedBox(height: 20),
-                      TextFormField(
-                        controller: _nameController,
-                        decoration: const InputDecoration(
-                          labelText: 'Name',
-                          border: OutlineInputBorder(),
-                        ),
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'Please enter a name';
-                          }
-                          return null;
+                      CheckboxListTile(
+                        title: const Text('With Interest'),
+                        value: _withInterest,
+                        onChanged: (newValue) {
+                          setState(() {
+                            _withInterest = newValue!;
+                          });
                         },
                       ),
-                      const SizedBox(height: 20),
-                      TextFormField(
-                        controller: _descriptionController,
-                        decoration: const InputDecoration(
-                          labelText: 'Description',
-                          border: OutlineInputBorder(),
-                        ),
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'Please enter a description';
-                          }
-                          return null;
+                      CheckboxListTile(
+                        title: const Text('With Insurance'),
+                        value: _withInsurance,
+                        onChanged: (newValue) {
+                          setState(() {
+                            _withInsurance = newValue!;
+                          });
                         },
                       ),
-                      if (widget.parentCode == '2.1.02.') ...[
-                        const SizedBox(height: 20),
-                        CheckboxListTile(
-                          title: const Text('With Interest'),
-                          value: _withInterest,
-                          onChanged: (newValue) {
-                            setState(() {
-                              _withInterest = newValue!;
-                            });
-                          },
-                        ),
-                        CheckboxListTile(
-                          title: const Text('With Insurance'),
-                          value: _withInsurance,
-                          onChanged: (newValue) {
-                            setState(() {
-                              _withInsurance = newValue!;
-                            });
-                          },
-                        ),
-                      ],
-                      const SizedBox(height: 20),
-                      if (_isCreating)
-                        const Center(child: CircularProgressIndicator())
-                      else
-                        ElevatedButton(
-                          onPressed: _createAccount,
-                          child: const Text('Create Account'),
-                        ),
                     ],
-                  ),
+                    const SizedBox(height: 20),
+                    if (_isCreating)
+                      const Center(child: CircularProgressIndicator())
+                    else
+                      ElevatedButton(
+                        onPressed: _createAccount,
+                        child: const Text('Create Account'),
+                      ),
+                  ],
                 ),
               ),
             ),

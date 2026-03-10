@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:mifinper/services/api_service.dart';
 import 'package:mifinper/screens/authorization/confirm_user_screen.dart';
+import 'package:mifinper/widgets/custom_text_field.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -73,27 +74,28 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       width: 150, // Ajusta el tamaño
                       height: 150,
                     ),
-                    TextField(
+                    CustomTextField(
                       controller: _nameController,
-                      decoration: const InputDecoration(
-                        labelText: 'Name',
-                      ),
+                      label: 'Nombre',
+                      isPassword: false,
+                      enabled: !_isLoading,
+                      isRequired: true,
                     ),
                     const SizedBox(height: 16.0),
-                    TextField(
+                    CustomTextField(
                       controller: _emailController,
-                      decoration: const InputDecoration(
-                        labelText: 'Email',
-                      ),
-                      keyboardType: TextInputType.emailAddress,
+                      label: 'Email',
+                      isPassword: false,
+                      enabled: !_isLoading,
+                      isRequired: true,
                     ),
                     const SizedBox(height: 16.0),
-                    TextField(
+                    CustomTextField(
                       controller: _passwordController,
-                      decoration: const InputDecoration(
-                        labelText: 'Password',
-                      ),
-                      obscureText: true,
+                      label: 'Contraseña',
+                      isPassword: true,
+                      enabled: !_isLoading,
+                      isRequired: true,
                     ),
                     const SizedBox(height: 32.0),
                     _isLoading
@@ -103,7 +105,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             style: ElevatedButton.styleFrom(
                               minimumSize: const Size(double.infinity, 50),
                             ),
-                            child: const Text('Register'),
+                            child: const Text('Registrar'),
                           ),
                   ],
                 ),

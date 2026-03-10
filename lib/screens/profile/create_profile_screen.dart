@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:mifinper/services/api_service.dart';
 import 'package:mifinper/widgets/custom_app_bar.dart';
+import 'package:mifinper/widgets/custom_text_field.dart';
 import 'package:mifinper/widgets/main_layout.dart';
 import 'package:mifinper/screens/dashboard_screen.dart';
 
@@ -13,7 +14,6 @@ class CreateProfileScreen extends StatefulWidget {
 }
 
 class _CreateProfileScreenState extends State<CreateProfileScreen> {
-  final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
   final _emailController = TextEditingController();
   final ApiService _apiService = ApiService();
@@ -28,10 +28,6 @@ class _CreateProfileScreenState extends State<CreateProfileScreen> {
   }
 
   Future<void> _createProfileAndInitialize() async {
-    if (!_formKey.currentState!.validate()) {
-      return;
-    }
-
     setState(() {
       _isCreating = true;
     });
@@ -60,7 +56,8 @@ class _CreateProfileScreenState extends State<CreateProfileScreen> {
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Perfil creado y inicializado con éxito')),
+          const SnackBar(
+              content: Text('Perfil creado y inicializado con éxito')),
         );
         // Navigate to DashboardScreen
         Navigator.of(context).pushAndRemoveUntil(
@@ -98,40 +95,34 @@ class _CreateProfileScreenState extends State<CreateProfileScreen> {
                 return Center(
                   child: ConstrainedBox(
                     constraints: BoxConstraints(
-                      maxWidth:
-                          constraints.maxWidth > 600 ? 600 : constraints.maxWidth,
+                      maxWidth: constraints.maxWidth > 600
+                          ? 600
+                          : constraints.maxWidth,
                     ),
                     child: Padding(
                       padding: const EdgeInsets.all(16.0),
-                      child: Form(
-                        key: _formKey,
-                        child: SingleChildScrollView(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Text(
-                                'Crear Nuevo Perfil',
-                                style: TextStyle(
-                                  fontSize: 24,
-                                  fontWeight: FontWeight.bold,
-                                ),
+                      child: SingleChildScrollView(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Crear Nuevo Perfil',
+                              style: Theme.of(context).textTheme.displayLarge,
+                            ),
+                            const SizedBox(height: 20),
+                            _buildTextField(
+                                _nameController, 'Nombre del Perfil'),
+                            const SizedBox(height: 20),
+                            _buildTextField(_emailController, 'Email del Perfil'),
+                            const SizedBox(height: 20),
+                            SizedBox(
+                              width: double.infinity,
+                              child: ElevatedButton(
+                                onPressed: _createProfileAndInitialize,
+                                child: const Text('Crear Perfil'),
                               ),
-                              const SizedBox(height: 20),
-                              _buildTextField(
-                                  _nameController, 'Nombre del Perfil'),
-                              const SizedBox(height: 20),
-                              _buildTextField(
-                                  _emailController, 'Email del Perfil'),
-                              const SizedBox(height: 20),
-                              SizedBox(
-                                width: double.infinity,
-                                child: ElevatedButton(
-                                  onPressed: _createProfileAndInitialize,
-                                  child: const Text('Crear Perfil'),
-                                ),
-                              ),
-                            ],
-                          ),
+                            ),
+                          ],
                         ),
                       ),
                     ),
@@ -143,14 +134,9 @@ class _CreateProfileScreenState extends State<CreateProfileScreen> {
   }
 
   Widget _buildTextField(TextEditingController controller, String label) {
-    return TextFormField(
+    return CustomTextField(
       controller: controller,
-      decoration: InputDecoration(
-        labelText: label,
-        border: const OutlineInputBorder(),
-      ),
-      validator: (value) =>
-          (value == null || value.isEmpty) ? 'Campo requerido' : null,
+      label: label,
     );
   }
 }

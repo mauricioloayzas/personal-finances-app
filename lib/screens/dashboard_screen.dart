@@ -74,10 +74,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              const Text(
+                              Text(
                                 'Here is your resume:',
-                                style: TextStyle(
-                                    fontSize: 20, fontWeight: FontWeight.bold),
+                                style: Theme.of(context).textTheme.displayLarge,
                               ),
                               ElevatedButton.icon(
                                 icon: const Icon(Icons.add),

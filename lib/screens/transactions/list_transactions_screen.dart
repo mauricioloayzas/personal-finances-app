@@ -8,7 +8,6 @@ import 'package:mifinper/screens/accounts/edit_account_screen.dart';
 import 'package:mifinper/screens/transactions/transaction_screen.dart';
 
 import '../../models/account_data.dart';
-import '../../core/enums.dart';
 
 class ListTransactionsScreen extends StatefulWidget {
   final String accountId;
@@ -99,8 +98,7 @@ class _ListTransactionsScreenState extends State<ListTransactionsScreen> {
                       padding: const EdgeInsets.all(8.0),
                       child: Text(
                         _pageTitle,
-                        style: const TextStyle(
-                            fontSize: 20, fontWeight: FontWeight.bold),
+                        style: Theme.of(context).textTheme.displayLarge,
                       ),
                     ),
                     if (_accountData != null) _buildButtons(),
@@ -140,18 +138,13 @@ class _ListTransactionsScreenState extends State<ListTransactionsScreen> {
   }
 
   Widget _buildButtons() {
-    final accountType =
-        AccountType.values.byName(_accountData!.type.toLowerCase());
-    final isAssetOrLiability = accountType == AccountType.asset ||
-        accountType == AccountType.liability;
-
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8.0),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
           ElevatedButton(
-            child: const Text('Edit'),
+            child: const Text('Editar'),
             onPressed: () {
               Navigator.push(
                 context,
@@ -164,23 +157,8 @@ class _ListTransactionsScreenState extends State<ListTransactionsScreen> {
               );
             },
           ),
-          if (isAssetOrLiability)
-            ElevatedButton(
-              child: const Text('Adjust'),
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => EditAccountScreen(
-                      accountId: widget.accountId,
-                      profileId: _selectedProfile!,
-                    ),
-                  ),
-                );
-              },
-            ),
           ElevatedButton(
-            child: const Text('Add Transaction'),
+            child: const Text('Agregar transacción'),
             onPressed: () {
               Navigator.push(
                 context,

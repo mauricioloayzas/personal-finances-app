@@ -23,7 +23,7 @@ class CustomDrawer extends StatelessWidget {
         children: <Widget>[
           const DrawerHeader(
             decoration: BoxDecoration(
-              color: Colors.orange,
+              color: Color(0xFF7A5C00),
             ),
             child: Text(
               'Menú',
