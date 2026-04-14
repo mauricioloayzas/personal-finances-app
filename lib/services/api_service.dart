@@ -397,6 +397,54 @@ class ApiService {
     }
   }
 
+  Future<void> createGeneralLedgerMonthlyRollover(String profileId) async {
+    final idToken = await _storage.read(key: 'idToken');
+    final apiPFUrl = dotenv.env['API_PF_URL'];
+    final urlEndpoint =
+        '$apiPFUrl/profiles/$profileId/general-ledger-monthly-rollover';
+
+    final response = await http.post(
+      Uri.parse(urlEndpoint),
+      headers: {
+        'Authorization': 'Bearer $idToken',
+        'Content-Type': 'application/json; charset=UTF-8',
+      },
+    );
+
+    if (response.statusCode != 201) {
+      final errorBody = jsonDecode(response.body);
+      throw Exception(errorBody['message'] ??
+          'Failed to create general ledger monthly rollover');
+    }
+  }
+
+  Future<List<dynamic>> fetchSummaryMonths(String profileId, {int? year}) async {
+    final idToken = await _storage.read(key: 'idToken');
+    final apiPFUrl = dotenv.env['API_PF_URL'];
+
+    final Map<String, String> queryParameters = {};
+    if (year != null) {
+      queryParameters['year'] = year.toString();
+    }
+
+    final uri = Uri.parse('$apiPFUrl/profiles/$profileId/summary-months')
+        .replace(queryParameters: queryParameters.isEmpty ? null : queryParameters);
+
+    final response = await http.get(
+      uri,
+      headers: {
+        'Authorization': 'Bearer $idToken',
+      },
+    );
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    } else {
+      final errorBody = jsonDecode(response.body);
+      throw Exception(errorBody['message'] ?? 'Failed to load summary months');
+    }
+  }
+
   Future<List<dynamic>> fetchJournalMovements(
       String profileId, String accountId,
       {int? year, int? month}) async {

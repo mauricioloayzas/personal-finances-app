@@ -227,14 +227,14 @@ class _AnotherTransactionState extends State<AnotherTransaction> {
                               },
                               onTapMobile: () => _showAccountSelector(context, (accountId) {
                                       setState(() {
-                                        _selectedCreditAccount = accountId;
+                                        _selectedDebitAccount = accountId;
                                       });
                                     }),
                               validator: (value) => value == null ? 'Campo requerido' : null,
                             ),
                             const SizedBox(height: 20),
                             CustomAccountSelector(
-                              label: 'Selecciona una cuenta debito',
+                              label: 'Selecciona una cuenta credito',
                               accounts: _accounts,
                               selectedAccountId: _selectedCreditAccount,
                               onChanged: (String? newValue) {
