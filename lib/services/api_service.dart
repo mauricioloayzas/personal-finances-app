@@ -5,15 +5,47 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:mifinper/models/journal_entry.dart';
 import 'package:http/http.dart' as http;
+import 'package:local_auth/local_auth.dart';
+import 'package:flutter/services.dart';
 
 import '../../core/enums.dart';
 
 class ApiService {
   final _storage = const FlutterSecureStorage();
+  final LocalAuthentication _localAuth = LocalAuthentication();
 
   Future<void> logout() async {
     await _storage.delete(key: 'idToken');
     await _storage.delete(key: 'sub');
+    // Opcionalmente borrar credenciales guardadas si se desea forzar re-login manual
+    // await _storage.delete(key: 'saved_email');
+    // await _storage.delete(key: 'saved_password');
+  }
+
+  Future<bool> isBiometricSupported() async {
+    try {
+      final bool canAuthenticateWithBiometrics =
+          await _localAuth.canCheckBiometrics;
+      final bool canAuthenticate =
+          canAuthenticateWithBiometrics || await _localAuth.isDeviceSupported();
+      return canAuthenticate;
+    } on PlatformException {
+      return false;
+    }
+  }
+
+  Future<bool> authenticateWithBiometrics() async {
+    try {
+      return await _localAuth.authenticate(
+        localizedReason: 'Autentícate para iniciar sesión',
+        options: const AuthenticationOptions(
+          stickyAuth: true,
+          biometricOnly: true,
+        ),
+      );
+    } on PlatformException {
+      return false;
+    }
   }
 
   Future<void> login(String email, String password) async {
@@ -34,12 +66,39 @@ class ApiService {
       if (idToken != null && sub != null) {
         await _storage.write(key: 'idToken', value: idToken);
         await _storage.write(key: 'sub', value: sub);
+        // Guardamos las credenciales para futuro login biométrico
+        await _storage.write(key: 'saved_email', value: email);
+        await _storage.write(key: 'saved_password', value: password);
       } else {
         throw Exception('Respuesta inválida del servidor.');
       }
     } else {
       throw Exception('Email o contraseña incorrectos.');
     }
+  }
+
+  Future<void> biometricLogin() async {
+    final email = await _storage.read(key: 'saved_email');
+    final password = await _storage.read(key: 'saved_password');
+
+    if (email != null && password != null) {
+      final authenticated = await authenticateWithBiometrics();
+      if (authenticated) {
+        await login(email, password);
+      } else {
+        throw Exception('Autenticación biométrica fallida o cancelada.');
+      }
+    } else {
+      throw Exception('No hay credenciales guardadas para biometría.');
+    }
+  }
+
+  Future<bool> canCheckBiometrics() async {
+    final email = await _storage.read(key: 'saved_email');
+    final password = await _storage.read(key: 'saved_password');
+    if (email == null || password == null) return false;
+    
+    return await isBiometricSupported();
   }
 
   Future<Map<String, dynamic>> registerUser(

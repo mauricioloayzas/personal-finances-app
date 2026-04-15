@@ -14,6 +14,58 @@ class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController _passwordController = TextEditingController();
   bool _isLoading = false;
   final ApiService _apiService = ApiService();
+  bool _canCheckBiometrics = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkBiometrics();
+  }
+
+  Future<void> _checkBiometrics() async {
+    final canCheck = await _apiService.canCheckBiometrics();
+    if (mounted) {
+      setState(() {
+        _canCheckBiometrics = canCheck;
+      });
+      // Opcionalmente, lanzar biometría automáticamente al cargar la pantalla
+      if (_canCheckBiometrics) {
+        _biometricLogin();
+      }
+    }
+  }
+
+  Future<void> _biometricLogin() async {
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      await _apiService.biometricLogin();
+      final profiles = await _apiService.fetchProfiles();
+
+      if (mounted) {
+        if (profiles.isEmpty) {
+          Navigator.pushReplacementNamed(context, '/create-profile');
+        } else {
+          Navigator.pushReplacementNamed(context, '/dashboard');
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        // No mostramos error si fue cancelado o no hay huellas configuradas
+        if (!e.toString().contains('cancelada')) {
+          _showError(e.toString().replaceFirst('Exception: ', ''));
+        }
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
+  }
 
   Future<void> _login() async {
     setState(() {
@@ -110,6 +162,14 @@ class _LoginScreenState extends State<LoginScreen> {
                           ? const CircularProgressIndicator(color: Colors.white)
                           : const Text('Iniciar Sesión'),
                     ),
+                    if (_canCheckBiometrics) ...[
+                      const SizedBox(height: 16),
+                      IconButton(
+                        onPressed: _isLoading ? null : _biometricLogin,
+                        icon: const Icon(Icons.fingerprint, size: 40),
+                        color: Theme.of(context).primaryColor,
+                      ),
+                    ],
                     const SizedBox(height: 16),
                     TextButton(
                       onPressed: _isLoading
