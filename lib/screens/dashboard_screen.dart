@@ -4,6 +4,7 @@ import 'package:mifinper/models/account_data.dart';
 import 'package:mifinper/screens/list_accounts_screen.dart';
 import 'package:mifinper/screens/transactions/another_transaction.dart';
 import 'package:mifinper/services/api_service.dart';
+import 'package:mifinper/services/month_rollover_service.dart';
 import 'package:mifinper/services/utils_functions.dart';
 import 'package:mifinper/widgets/custom_app_bar.dart';
 import 'package:mifinper/widgets/main_layout.dart';
@@ -18,6 +19,7 @@ class DashboardScreen extends StatefulWidget {
 class _DashboardScreenState extends State<DashboardScreen>
     with SingleTickerProviderStateMixin {
   final ApiService _apiService = ApiService();
+  final MonthRolloverService _rolloverService = MonthRolloverService();
 
   List<dynamic> _dashboardInformation = [];
   bool _isFetchingDashboardInformation = true;
@@ -25,6 +27,9 @@ class _DashboardScreenState extends State<DashboardScreen>
 
   List<dynamic> _summaryMonths = [];
   bool _isFetchingSummary = false;
+
+  bool _rolloverNeeded = false;
+  bool _isPerformingRollover = false;
 
   late TabController _tabController;
 
@@ -69,6 +74,48 @@ class _DashboardScreenState extends State<DashboardScreen>
     }
   }
 
+  Future<void> _checkRollover(String profileId) async {
+    final needed =
+        await _rolloverService.checkAndFetchIfNeeded(profileId, _apiService);
+    if (mounted) {
+      setState(() => _rolloverNeeded = needed);
+    }
+  }
+
+  Future<void> _performRollover() async {
+    if (_selectedProfile == null) return;
+    setState(() => _isPerformingRollover = true);
+    try {
+      await _apiService.createGeneralLedgerMonthlyRollover(_selectedProfile!);
+      // Clear the cache so the next daily check re-fetches updated data
+      await _rolloverService.clearCache(_selectedProfile!);
+      if (mounted) {
+        setState(() {
+          _rolloverNeeded = false;
+          // Reset summary so it refreshes when the user opens the tab
+          _summaryMonths = [];
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Month closed successfully.'),
+            backgroundColor: Colors.teal,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(e.toString().replaceFirst('Exception: ', '')),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isPerformingRollover = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return MainLayout(
@@ -79,6 +126,7 @@ class _DashboardScreenState extends State<DashboardScreen>
             )
           : Column(
               children: [
+                if (_rolloverNeeded) _buildRolloverBanner(),
                 TabBar(
                   controller: _tabController,
                   tabs: const [
@@ -121,12 +169,55 @@ class _DashboardScreenState extends State<DashboardScreen>
           setState(() {
             _selectedProfile = profileId;
             _summaryMonths = [];
+            _rolloverNeeded = false;
           });
-          if (profileId != null && _tabController.index == 1) {
-            _loadSummaryMonths(profileId);
+          if (profileId != null) {
+            _checkRollover(profileId);
+            if (_tabController.index == 1) {
+              _loadSummaryMonths(profileId);
+            }
           }
         }
       },
+    );
+  }
+
+  // ── Rollover banner ───────────────────────────────────────────────────────
+
+  Widget _buildRolloverBanner() {
+    return Container(
+      color: Colors.orange.shade800,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      child: Row(
+        children: [
+          const Icon(Icons.warning_amber_rounded, color: Colors.white),
+          const SizedBox(width: 12),
+          const Expanded(
+            child: Text(
+              'A new month has started. Close the previous month to keep your records up to date.',
+              style: TextStyle(color: Colors.white, fontSize: 13),
+            ),
+          ),
+          const SizedBox(width: 12),
+          _isPerformingRollover
+              ? const SizedBox(
+                  width: 24,
+                  height: 24,
+                  child: CircularProgressIndicator(
+                    color: Colors.white,
+                    strokeWidth: 2,
+                  ),
+                )
+              : ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.white,
+                    foregroundColor: Colors.orange.shade800,
+                  ),
+                  onPressed: _performRollover,
+                  child: const Text('Close Month'),
+                ),
+        ],
+      ),
     );
   }
 
@@ -443,9 +534,9 @@ class _DashboardScreenState extends State<DashboardScreen>
         border: TableBorder.all(
             color: Colors.grey.shade300, borderRadius: BorderRadius.circular(8)),
         children: [
-          TableRow(
-            decoration: const BoxDecoration(color: Colors.black87),
-            children: const [
+          const TableRow(
+            decoration: BoxDecoration(color: Colors.black87),
+            children: [
               _TableCell('Month', isHeader: true),
               _TableCell('Result', isHeader: true),
               _TableCell('Balance', isHeader: true),
