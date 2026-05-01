@@ -2,10 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:mifinper/screens/list_accounts_screen.dart';
 import 'package:mifinper/screens/transactions/another_transaction.dart';
+import 'package:mifinper/screens/authorization/edit_user_screen.dart';
+import 'package:mifinper/screens/profile/edit_profile_screen.dart';
 
 class CustomDrawer extends StatelessWidget {
   final _storage = const FlutterSecureStorage();
-  const CustomDrawer({super.key});
+  final String? profileId;
+
+  const CustomDrawer({super.key, this.profileId});
 
   Future<void> _logout(BuildContext context) async {
     await _storage.delete(key: 'idToken');
@@ -41,6 +45,32 @@ class CustomDrawer extends StatelessWidget {
               Navigator.pushReplacementNamed(context, '/dashboard');
             },
           ),
+          ListTile(
+            leading: const Icon(Icons.person),
+            title: const Text('Editar Usuario'),
+            onTap: () {
+              Navigator.pop(context);
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const EditUserScreen()),
+              );
+            },
+          ),
+          if (profileId != null)
+            ListTile(
+              leading: const Icon(Icons.account_circle),
+              title: const Text('Editar Perfil'),
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => EditProfileScreen(profileId: profileId!),
+                  ),
+                );
+              },
+            ),
+          const Divider(),
           ListTile(
             leading: const Icon(Icons.money),
             title: const Text('Cash'),

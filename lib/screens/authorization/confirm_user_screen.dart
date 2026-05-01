@@ -61,32 +61,34 @@ class _ConfirmUserScreenState extends State<ConfirmUserScreen> {
               ),
               child: Padding(
                 padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Image.asset(
-                      'assets/images/logo.png',
-                      width: 150, // Ajusta el tamaño
-                      height: 150,
-                    ),
-                    Text(
-                        'Ingresa el código enviado a ${widget.email}'),
-                    const SizedBox(height: 16.0),
-                    CustomTextField(
-                      controller: _confirmationCodeController,
-                      label: 'Confirmar Código',
-                      isPassword: false,
-                      enabled: !_isLoading,
-                      isRequired: true,
-                    ),
-                    const SizedBox(height: 32.0),
-                    _isLoading
-                        ? const CircularProgressIndicator()
-                        : ElevatedButton(
-                            onPressed: _confirmUser,
-                            child: const Text('Confirmar'),
-                          ),
-                  ],
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Image.asset(
+                        'assets/images/logo.png',
+                        width: 150, // Ajusta el tamaño
+                        height: 150,
+                      ),
+                      Text(
+                          'Ingresa el código enviado a ${widget.email}'),
+                      const SizedBox(height: 16.0),
+                      CustomTextField(
+                        controller: _confirmationCodeController,
+                        label: 'Confirmar Código',
+                        isPassword: false,
+                        enabled: !_isLoading,
+                        isRequired: true,
+                      ),
+                      const SizedBox(height: 32.0),
+                      _isLoading
+                          ? const CircularProgressIndicator()
+                          : ElevatedButton(
+                              onPressed: _confirmUser,
+                              child: const Text('Confirmar'),
+                            ),
+                    ],
+                  ),
                 ),
               ),
             ),

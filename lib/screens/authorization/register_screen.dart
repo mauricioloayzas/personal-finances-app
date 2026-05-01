@@ -14,10 +14,59 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
+  
+  String? _selectedCountryId;
+  String? _selectedTimeZoneId;
+  String? _selectedLanguageId;
+
+  List<dynamic> _countries = [];
+  List<dynamic> _timeZones = [];
+  List<dynamic> _languages = [];
+
   final ApiService _apiService = ApiService();
   bool _isLoading = false;
+  bool _isFetchingData = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadInitialData();
+  }
+
+  Future<void> _loadInitialData() async {
+    try {
+      final results = await Future.wait([
+        _apiService.fetchCountries(),
+        _apiService.fetchTimezones(),
+        _apiService.fetchLanguages(),
+      ]);
+
+      setState(() {
+        _countries = results[0];
+        _timeZones = results[1];
+        _languages = results[2];
+        _isFetchingData = false;
+      });
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error al cargar datos iniciales: $e')),
+      );
+      setState(() {
+        _isFetchingData = false;
+      });
+    }
+  }
 
   void _register() async {
+    if (_selectedCountryId == null ||
+        _selectedTimeZoneId == null ||
+        _selectedLanguageId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Todos los campos son obligatorios')),
+      );
+      return;
+    }
+
     setState(() {
       _isLoading = true;
     });
@@ -25,9 +74,28 @@ class _RegisterScreenState extends State<RegisterScreen> {
     final String name = _nameController.text;
     final String email = _emailController.text;
     final String password = _passwordController.text;
+    final String countryId = _selectedCountryId!;
+    final String timeZoneId = _selectedTimeZoneId!;
+    final String languageId = _selectedLanguageId!;
 
-    final Map<String, dynamic> result =
-        await _apiService.registerUser(name, email, password);
+    if (name.isEmpty || email.isEmpty || password.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Todos los campos son obligatorios')),
+      );
+      setState(() {
+        _isLoading = false;
+      });
+      return;
+    }
+
+    final Map<String, dynamic> result = await _apiService.registerUser(
+      name: name,
+      email: email,
+      password: password,
+      countryId: countryId,
+      timeZoneId: timeZoneId,
+      languageId: languageId,
+    );
     print(result);
     if (result['success']) {
       // Navigate to confirmation screen or show success message
@@ -42,7 +110,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       );
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Registration failed: ${result['error']}')),
+        SnackBar(content: Text('Registration failed: ${result['error'] ?? result['message']}')),
       );
     }
 
@@ -53,67 +121,155 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   @override
   Widget build(BuildContext context) {
+    const customColor = Color(0xFFFFECB3);
+    const focusColor = Color(0xFFFFD700);
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Register'),
       ),
-      body: LayoutBuilder(
-        builder: (context, constraints) {
-          return Center(
-            child: ConstrainedBox(
-              constraints: BoxConstraints(
-                maxWidth: constraints.maxWidth > 600 ? 400 : constraints.maxWidth,
-              ),
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Image.asset(
-                      'assets/images/logo.png',
-                      width: 150, // Ajusta el tamaño
-                      height: 150,
+      body: _isFetchingData
+          ? const Center(child: CircularProgressIndicator())
+          : LayoutBuilder(
+              builder: (context, constraints) {
+                return Center(
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(
+                      maxWidth: constraints.maxWidth > 600 ? 400 : constraints.maxWidth,
                     ),
-                    CustomTextField(
-                      controller: _nameController,
-                      label: 'Nombre',
-                      isPassword: false,
-                      enabled: !_isLoading,
-                      isRequired: true,
-                    ),
-                    const SizedBox(height: 16.0),
-                    CustomTextField(
-                      controller: _emailController,
-                      label: 'Email',
-                      isPassword: false,
-                      enabled: !_isLoading,
-                      isRequired: true,
-                    ),
-                    const SizedBox(height: 16.0),
-                    CustomTextField(
-                      controller: _passwordController,
-                      label: 'Contraseña',
-                      isPassword: true,
-                      enabled: !_isLoading,
-                      isRequired: true,
-                    ),
-                    const SizedBox(height: 32.0),
-                    _isLoading
-                        ? const CircularProgressIndicator()
-                        : ElevatedButton(
-                            onPressed: _register,
-                            style: ElevatedButton.styleFrom(
-                              minimumSize: const Size(double.infinity, 50),
+                    child: Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: SingleChildScrollView(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Image.asset(
+                              'assets/images/logo.png',
+                              width: 150, // Ajusta el tamaño
+                              height: 150,
                             ),
-                            child: const Text('Registrar'),
-                          ),
-                  ],
-                ),
-              ),
+                            CustomTextField(
+                              controller: _nameController,
+                              label: 'Nombre',
+                              isPassword: false,
+                              enabled: !_isLoading,
+                              isRequired: true,
+                            ),
+                            const SizedBox(height: 16.0),
+                            CustomTextField(
+                              controller: _emailController,
+                              label: 'Email',
+                              isPassword: false,
+                              enabled: !_isLoading,
+                              isRequired: true,
+                            ),
+                            const SizedBox(height: 16.0),
+                            CustomTextField(
+                              controller: _passwordController,
+                              label: 'Contraseña',
+                              isPassword: true,
+                              enabled: !_isLoading,
+                              isRequired: true,
+                            ),
+                            const SizedBox(height: 16.0),
+                            DropdownButtonFormField<String>(
+                              value: _selectedCountryId,
+                              decoration: const InputDecoration(
+                                labelText: 'País *',
+                                labelStyle: TextStyle(color: customColor),
+                                enabledBorder: OutlineInputBorder(
+                                  borderSide: BorderSide(color: customColor, width: 1.0),
+                                ),
+                                focusedBorder: OutlineInputBorder(
+                                  borderSide: BorderSide(color: focusColor, width: 2.0),
+                                ),
+                              ),
+                              items: _countries.map((country) {
+                                return DropdownMenuItem<String>(
+                                  value: country['id'],
+                                  child: Text(country['name']),
+                                );
+                              }).toList(),
+                              onChanged: _isLoading
+                                  ? null
+                                  : (value) {
+                                      setState(() {
+                                        _selectedCountryId = value;
+                                      });
+                                    },
+                            ),
+                            const SizedBox(height: 16.0),
+                            DropdownButtonFormField<String>(
+                              value: _selectedTimeZoneId,
+                              decoration: const InputDecoration(
+                                labelText: 'Zona Horaria *',
+                                labelStyle: TextStyle(color: customColor),
+                                enabledBorder: OutlineInputBorder(
+                                  borderSide: BorderSide(color: customColor, width: 1.0),
+                                ),
+                                focusedBorder: OutlineInputBorder(
+                                  borderSide: BorderSide(color: focusColor, width: 2.0),
+                                ),
+                              ),
+                              items: _timeZones.map((timezone) {
+                                return DropdownMenuItem<String>(
+                                  value: timezone['id'],
+                                  child: Text(timezone['name']),
+                                );
+                              }).toList(),
+                              onChanged: _isLoading
+                                  ? null
+                                  : (value) {
+                                      setState(() {
+                                        _selectedTimeZoneId = value;
+                                      });
+                                    },
+                            ),
+                            const SizedBox(height: 16.0),
+                            DropdownButtonFormField<String>(
+                              value: _selectedLanguageId,
+                              decoration: const InputDecoration(
+                                labelText: 'Idioma *',
+                                labelStyle: TextStyle(color: customColor),
+                                enabledBorder: OutlineInputBorder(
+                                  borderSide: BorderSide(color: customColor, width: 1.0),
+                                ),
+                                focusedBorder: OutlineInputBorder(
+                                  borderSide: BorderSide(color: focusColor, width: 2.0),
+                                ),
+                              ),
+                              items: _languages.map((language) {
+                                return DropdownMenuItem<String>(
+                                  value: language['id'],
+                                  child: Text(language['name']),
+                                );
+                              }).toList(),
+                              onChanged: _isLoading
+                                  ? null
+                                  : (value) {
+                                      setState(() {
+                                        _selectedLanguageId = value;
+                                      });
+                                    },
+                            ),
+                            const SizedBox(height: 32.0),
+                            _isLoading
+                                ? const CircularProgressIndicator()
+                                : ElevatedButton(
+                                    onPressed: _register,
+                                    style: ElevatedButton.styleFrom(
+                                      minimumSize: const Size(double.infinity, 50),
+                                    ),
+                                    child: const Text('Registrar'),
+                                  ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                );
+              },
             ),
-          );
-        },
-      ),
     );
   }
 }

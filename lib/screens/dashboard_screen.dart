@@ -120,6 +120,7 @@ class _DashboardScreenState extends State<DashboardScreen>
   Widget build(BuildContext context) {
     return MainLayout(
       appBar: _buildAppBar(),
+      profileId: _selectedProfile,
       child: _selectedProfile == null
           ? const Center(
               child: Text('Please select a profile to see the accounts.'),

@@ -186,6 +186,7 @@ class _AnotherTransactionState extends State<AnotherTransaction> {
           }
         },
       ),
+      profileId: _selectedProfile.isEmpty ? null : _selectedProfile,
       child: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : LayoutBuilder(

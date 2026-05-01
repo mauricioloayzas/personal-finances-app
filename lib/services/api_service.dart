@@ -4,6 +4,8 @@ import 'package:intl/intl.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:mifinper/models/journal_entry.dart';
+import 'package:mifinper/models/profile.dart';
+import 'package:mifinper/models/user.dart';
 import 'package:http/http.dart' as http;
 import 'package:local_auth/local_auth.dart';
 import 'package:flutter/services.dart';
@@ -14,9 +16,15 @@ class ApiService {
   final _storage = const FlutterSecureStorage();
   final LocalAuthentication _localAuth = LocalAuthentication();
 
+  // Static cache to persist across instances during the same session
+  static List<dynamic>? _cachedProfiles;
+  static String? _selectedProfileId;
+
   Future<void> logout() async {
     await _storage.delete(key: 'idToken');
     await _storage.delete(key: 'sub');
+    _cachedProfiles = null;
+    _selectedProfileId = null;
     // Opcionalmente borrar credenciales guardadas si se desea forzar re-login manual
     // await _storage.delete(key: 'saved_email');
     // await _storage.delete(key: 'saved_password');
@@ -101,8 +109,134 @@ class ApiService {
     return await isBiometricSupported();
   }
 
-  Future<Map<String, dynamic>> registerUser(
-      String name, String email, String password) async {
+  Future<List<dynamic>> fetchCountries() async {
+    final idToken = await _storage.read(key: 'idToken');
+    final response = await http.get(
+      Uri.parse('${dotenv.env['API_ORCHESTRATOR_URL']}/countries'),
+      headers: {
+        'Authorization': 'Bearer $idToken',
+      },
+    );
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    } else {
+      throw Exception('Failed to load countries');
+    }
+  }
+
+  Future<Map<String, dynamic>> fetchCountryById(String id) async {
+    final idToken = await _storage.read(key: 'idToken');
+    final response = await http.get(
+      Uri.parse('${dotenv.env['API_ORCHESTRATOR_URL']}/countries/$id'),
+      headers: {
+        'Authorization': 'Bearer $idToken',
+      },
+    );
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    } else {
+      throw Exception('Failed to load country');
+    }
+  }
+
+  Future<List<dynamic>> fetchLanguages() async {
+    final idToken = await _storage.read(key: 'idToken');
+    final response = await http.get(
+      Uri.parse('${dotenv.env['API_ORCHESTRATOR_URL']}/languages'),
+      headers: {
+        'Authorization': 'Bearer $idToken',
+      },
+    );
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    } else {
+      throw Exception('Failed to load languages');
+    }
+  }
+
+  Future<Map<String, dynamic>> fetchLanguageById(String id) async {
+    final idToken = await _storage.read(key: 'idToken');
+    final response = await http.get(
+      Uri.parse('${dotenv.env['API_ORCHESTRATOR_URL']}/languages/$id'),
+      headers: {
+        'Authorization': 'Bearer $idToken',
+      },
+    );
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    } else {
+      throw Exception('Failed to load language');
+    }
+  }
+
+  Future<List<dynamic>> fetchCurrencies() async {
+    final idToken = await _storage.read(key: 'idToken');
+    final response = await http.get(
+      Uri.parse('${dotenv.env['API_ORCHESTRATOR_URL']}/currencies'),
+      headers: {
+        'Authorization': 'Bearer $idToken',
+      },
+    );
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    } else {
+      throw Exception('Failed to load currencies');
+    }
+  }
+
+  Future<Map<String, dynamic>> fetchCurrencyById(String id) async {
+    final idToken = await _storage.read(key: 'idToken');
+    final response = await http.get(
+      Uri.parse('${dotenv.env['API_ORCHESTRATOR_URL']}/currencies/$id'),
+      headers: {
+        'Authorization': 'Bearer $idToken',
+      },
+    );
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    } else {
+      throw Exception('Failed to load currency');
+    }
+  }
+
+  Future<List<dynamic>> fetchTimezones() async {
+    final idToken = await _storage.read(key: 'idToken');
+    final response = await http.get(
+      Uri.parse('${dotenv.env['API_ORCHESTRATOR_URL']}/timezones'),
+      headers: {
+        'Authorization': 'Bearer $idToken',
+      },
+    );
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    } else {
+      throw Exception('Failed to load timezones');
+    }
+  }
+
+  Future<Map<String, dynamic>> fetchTimezoneById(String id) async {
+    final idToken = await _storage.read(key: 'idToken');
+    final response = await http.get(
+      Uri.parse('${dotenv.env['API_ORCHESTRATOR_URL']}/timezones/$id'),
+      headers: {
+        'Authorization': 'Bearer $idToken',
+      },
+    );
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    } else {
+      throw Exception('Failed to load timezone');
+    }
+  }
+
+  Future<Map<String, dynamic>> registerUser({
+    required String name,
+    required String email,
+    required String password,
+    required String countryId,
+    required String timeZoneId,
+    required String languageId,
+  }) async {
     final response = await http.post(
       Uri.parse('${dotenv.env['API_ORCHESTRATOR_URL']}/auth/register'),
       headers: <String, String>{
@@ -112,6 +246,9 @@ class ApiService {
         'name': name,
         'email': email,
         'password': password,
+        'country_id': countryId,
+        'time_zone_id': timeZoneId,
+        'language_id': languageId,
       }),
     );
 
@@ -142,7 +279,7 @@ class ApiService {
     }
   }
 
-  Future<Map<String, dynamic>> _fetchProfileDetails(String profileId) async {
+  Future<Map<String, dynamic>> fetchProfileDetails(String profileId) async {
     final idToken = await _storage.read(key: 'idToken');
     final apiOrchestratorUrl = dotenv.env['API_ORCHESTRATOR_URL'];
     final response = await http.get(
@@ -159,7 +296,13 @@ class ApiService {
     }
   }
 
-  Future<Map<String, dynamic>> createProfile(String name, String email) async {
+  Future<Map<String, dynamic>> createProfile({
+    required String name,
+    required String email,
+    required String countryId,
+    required String currencyId,
+    Map<String, dynamic>? extraData,
+  }) async {
     final profileId = dotenv.env['SERVICE_PROFILE_ID'];
     final idToken = await _storage.read(key: 'idToken');
     final apiOrchestratorUrl = dotenv.env['API_ORCHESTRATOR_URL'];
@@ -169,6 +312,9 @@ class ApiService {
       'name': name,
       'email': email,
       'type': ProfileType.person.name,
+      'country_id': countryId,
+      'currency_id': currencyId,
+      if (extraData != null) ...extraData,
     };
 
     final response = await http.post(
@@ -187,6 +333,93 @@ class ApiService {
       throw Exception(errorBody['message'] ?? 'Failed to create profile');
     }
   }
+
+  Future<Map<String, dynamic>> updateProfile(String profileId, Map<String, dynamic> profileData) async {
+    final idToken = await _storage.read(key: 'idToken');
+    final apiOrchestratorUrl = dotenv.env['API_ORCHESTRATOR_URL'];
+    final urlEndpoint = '$apiOrchestratorUrl/profiles/$profileId';
+
+    final response = await http.put(
+      Uri.parse(urlEndpoint),
+      headers: {
+        'Authorization': 'Bearer $idToken',
+        'Content-Type': 'application/json; charset=UTF-8',
+      },
+      body: json.encode(profileData),
+    );
+
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      return jsonDecode(response.body);
+    } else {
+      final errorBody = jsonDecode(response.body);
+      throw Exception(errorBody['message'] ?? 'Failed to update profile');
+    }
+  }
+
+  Future<Map<String, dynamic>> fetchUser(String userId) async {
+    final idToken = await _storage.read(key: 'idToken');
+    final apiOrchestratorUrl = dotenv.env['API_ORCHESTRATOR_URL'];
+    final urlEndpoint = '$apiOrchestratorUrl/users/$userId';
+
+    final response = await http.get(
+      Uri.parse(urlEndpoint),
+      headers: {
+        'Authorization': 'Bearer $idToken',
+      },
+    );
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    } else {
+      final errorBody = jsonDecode(response.body);
+      throw Exception(errorBody['message'] ?? 'Failed to fetch user');
+    }
+  }
+
+  Future<Map<String, dynamic>> updateUser(String userId, Map<String, dynamic> userData) async {
+    final idToken = await _storage.read(key: 'idToken');
+    final apiOrchestratorUrl = dotenv.env['API_ORCHESTRATOR_URL'];
+    final urlEndpoint = '$apiOrchestratorUrl/users/$userId';
+
+    final response = await http.put(
+      Uri.parse(urlEndpoint),
+      headers: {
+        'Authorization': 'Bearer $idToken',
+        'Content-Type': 'application/json; charset=UTF-8',
+      },
+      body: json.encode(userData),
+    );
+
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      return jsonDecode(response.body);
+    } else {
+      final errorBody = jsonDecode(response.body);
+      throw Exception(errorBody['message'] ?? 'Failed to update user');
+    }
+  }
+
+  Future<Map<String, dynamic>> createUser(Map<String, dynamic> userData) async {
+    final idToken = await _storage.read(key: 'idToken');
+    final apiOrchestratorUrl = dotenv.env['API_ORCHESTRATOR_URL'];
+    final urlEndpoint = '$apiOrchestratorUrl/users';
+
+    final response = await http.post(
+      Uri.parse(urlEndpoint),
+      headers: {
+        'Authorization': 'Bearer $idToken',
+        'Content-Type': 'application/json; charset=UTF-8',
+      },
+      body: json.encode(userData),
+    );
+
+    if (response.statusCode == 201) {
+      return jsonDecode(response.body);
+    } else {
+      final errorBody = jsonDecode(response.body);
+      throw Exception(errorBody['message'] ?? 'Failed to create user');
+    }
+  }
+
 
   Future<Map<String, dynamic>> createRbac(
       String profileId, String userId) async {
@@ -217,7 +450,11 @@ class ApiService {
     }
   }
 
-  Future<List<dynamic>> fetchProfiles() async {
+  Future<List<dynamic>> fetchProfiles({bool forceRefresh = false}) async {
+    if (!forceRefresh && _cachedProfiles != null) {
+      return _cachedProfiles!;
+    }
+
     final idToken = await _storage.read(key: 'idToken');
     final sub = await _storage.read(key: 'sub');
     final apiOrchestratorUrl = dotenv.env['API_ORCHESTRATOR_URL'];
@@ -231,15 +468,27 @@ class ApiService {
 
     if (response.statusCode == 200) {
       final List<dynamic> rbacs = jsonDecode(response.body);
+      final Set<String> profileIds = rbacs.map((rbac) => rbac['profile_id'].toString()).toSet();
       final profileDetails = await Future.wait(
-        rbacs.map<Future<Map<String, dynamic>>>((rbac) {
-          return _fetchProfileDetails(rbac['profile_id'].toString());
+        profileIds.map<Future<Map<String, dynamic>>>((profileId) {
+          return fetchProfileDetails(profileId);
         }).toList(),
       );
+      _cachedProfiles = profileDetails;
       return profileDetails;
     } else {
       return [];
     }
+  }
+
+  void clearProfilesCache() {
+    _cachedProfiles = null;
+  }
+
+  String? get selectedProfileId => _selectedProfileId;
+  
+  void setSelectedProfileId(String? id) {
+    _selectedProfileId = id;
   }
 
   Future<List<dynamic>> fetchAccounts(String profileId, String? codeParent,

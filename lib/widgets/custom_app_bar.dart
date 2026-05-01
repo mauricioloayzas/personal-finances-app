@@ -38,9 +38,23 @@ class _CustomAppBarState extends State<CustomAppBar> {
       setState(() {
         _profiles = profiles;
         if (_profiles.isNotEmpty) {
-          _selectedProfile = _profiles.first['id'].toString();
+          // Si ya hay un perfil seleccionado en el servicio, lo usamos.
+          // Si no, usamos el primero de la lista.
+          final currentSelectedId = _apiService.selectedProfileId;
+          
+          if (currentSelectedId != null && _profiles.any((p) => p['id'].toString() == currentSelectedId)) {
+            _selectedProfile = currentSelectedId;
+          } else if (_profiles.isNotEmpty) {
+            _selectedProfile = _profiles.first['id'].toString();
+            _apiService.setSelectedProfileId(_selectedProfile);
+          } else {
+            _selectedProfile = null;
+          }
+          
           widget.onSelectedProfileChanged(_selectedProfile);
-          _loadDashboardInformation(_selectedProfile!);
+          if (_selectedProfile != null) {
+            _loadDashboardInformation(_selectedProfile!);
+          }
         }
         _isLoading = false;
       });
@@ -69,6 +83,7 @@ class _CustomAppBarState extends State<CustomAppBar> {
     if (newProfileId != null && newProfileId != _selectedProfile) {
       setState(() {
         _selectedProfile = newProfileId;
+        _apiService.setSelectedProfileId(newProfileId);
         widget.onSelectedProfileChanged(newProfileId);
         widget.onDashboardInformationChanged([]);
       });
@@ -117,17 +132,17 @@ class _CustomAppBarState extends State<CustomAppBar> {
           )
         else if (_profiles.isNotEmpty)
           DropdownButton<String>(
-            value: _selectedProfile,
+            value: _profiles.any((p) => p['id'].toString() == _selectedProfile) ? _selectedProfile : null,
             hint: const Text('Select Profile',
                 style: TextStyle(color: Colors.black)),
             onChanged: _onProfileChanged,
             items: _profiles.map<DropdownMenuItem<String>>((profile) {
               return DropdownMenuItem<String>(
                 value: profile['id'].toString(),
-                child: Text(profile['name']),
+                child: Text(profile['name'] ?? 'Unnamed'),
               );
             }).toList(),
-            dropdownColor: Color(0xFF7A5C00),
+            dropdownColor: const Color(0xFF7A5C00),
             style: Theme.of(context)
                 .textTheme
                 .titleMedium

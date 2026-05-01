@@ -58,7 +58,7 @@ class CustomAccountSelector extends StatelessWidget {
     } else {
       // VISTA DESKTOP/TABLET: Dropdown estándar
       return DropdownButtonFormField<String>(
-        value: selectedAccountId,
+        value: accounts.any((acc) => acc['id'] == selectedAccountId) ? selectedAccountId : null,
         hint: Text(label, style: const TextStyle(color: customColor)),
         onChanged: onChanged,
         validator: validator,

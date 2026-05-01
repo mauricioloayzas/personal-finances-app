@@ -4,6 +4,7 @@ import 'package:mifinper/screens/authorization/login_screen.dart';
 import 'package:mifinper/screens/authorization/register_screen.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:mifinper/screens/profile/create_profile_screen.dart';
+import 'package:mifinper/screens/authorization/edit_user_screen.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();

@@ -16,9 +16,47 @@ class CreateProfileScreen extends StatefulWidget {
 class _CreateProfileScreenState extends State<CreateProfileScreen> {
   final _nameController = TextEditingController();
   final _emailController = TextEditingController();
+  
+  String? _selectedCountryId;
+  String? _selectedCurrencyId;
+
+  List<dynamic> _countries = [];
+  List<dynamic> _currencies = [];
+
   final ApiService _apiService = ApiService();
   final _storage = const FlutterSecureStorage();
   bool _isCreating = false;
+  bool _isFetchingData = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadInitialData();
+  }
+
+  Future<void> _loadInitialData() async {
+    try {
+      final results = await Future.wait([
+        _apiService.fetchCountries(),
+        _apiService.fetchCurrencies(),
+      ]);
+
+      setState(() {
+        _countries = results[0];
+        _currencies = results[1];
+        _isFetchingData = false;
+      });
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error al cargar datos iniciales: $e')),
+        );
+      }
+      setState(() {
+        _isFetchingData = false;
+      });
+    }
+  }
 
   @override
   void dispose() {
@@ -28,6 +66,13 @@ class _CreateProfileScreenState extends State<CreateProfileScreen> {
   }
 
   Future<void> _createProfileAndInitialize() async {
+    if (_selectedCountryId == null || _selectedCurrencyId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Todos los campos son obligatorios')),
+      );
+      return;
+    }
+
     setState(() {
       _isCreating = true;
     });
@@ -40,8 +85,10 @@ class _CreateProfileScreenState extends State<CreateProfileScreen> {
 
       // 1. Create Profile
       final Map<String, dynamic> newProfile = await _apiService.createProfile(
-        _nameController.text,
-        _emailController.text,
+        name: _nameController.text,
+        email: _emailController.text,
+        countryId: _selectedCountryId!,
+        currencyId: _selectedCurrencyId!,
       );
       final String newProfileId = newProfile['id'];
 
@@ -53,6 +100,8 @@ class _CreateProfileScreenState extends State<CreateProfileScreen> {
 
       // 3. Initialize Profile Accounts
       await _apiService.initProfileAccounts(newProfileId);
+
+      _apiService.clearProfilesCache();
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -82,13 +131,16 @@ class _CreateProfileScreenState extends State<CreateProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
+    const customColor = Color(0xFFFFECB3);
+    const focusColor = Color(0xFFFFD700);
+
     return MainLayout(
       appBar: CustomAppBar(
         onDashboardInformationChanged: (_) {},
         onFetchingDashboardInformationChanged: (_) {},
         onSelectedProfileChanged: (_) {},
       ),
-      child: _isCreating
+      child: _isCreating || _isFetchingData
           ? const Center(child: CircularProgressIndicator())
           : LayoutBuilder(
               builder: (context, constraints) {
@@ -115,6 +167,56 @@ class _CreateProfileScreenState extends State<CreateProfileScreen> {
                             const SizedBox(height: 20),
                             _buildTextField(_emailController, 'Email del Perfil'),
                             const SizedBox(height: 20),
+                            DropdownButtonFormField<String>(
+                              value: _selectedCountryId,
+                              decoration: const InputDecoration(
+                                labelText: 'País *',
+                                labelStyle: TextStyle(color: customColor),
+                                enabledBorder: OutlineInputBorder(
+                                  borderSide: BorderSide(color: customColor, width: 1.0),
+                                ),
+                                focusedBorder: OutlineInputBorder(
+                                  borderSide: BorderSide(color: focusColor, width: 2.0),
+                                ),
+                              ),
+                              items: _countries.map((country) {
+                                return DropdownMenuItem<String>(
+                                  value: country['id'],
+                                  child: Text(country['name']),
+                                );
+                              }).toList(),
+                              onChanged: (value) {
+                                setState(() {
+                                  _selectedCountryId = value;
+                                });
+                              },
+                            ),
+                            const SizedBox(height: 20),
+                            DropdownButtonFormField<String>(
+                              value: _selectedCurrencyId,
+                              decoration: const InputDecoration(
+                                labelText: 'Moneda *',
+                                labelStyle: TextStyle(color: customColor),
+                                enabledBorder: OutlineInputBorder(
+                                  borderSide: BorderSide(color: customColor, width: 1.0),
+                                ),
+                                focusedBorder: OutlineInputBorder(
+                                  borderSide: BorderSide(color: focusColor, width: 2.0),
+                                ),
+                              ),
+                              items: _currencies.map((currency) {
+                                return DropdownMenuItem<String>(
+                                  value: currency['id'],
+                                  child: Text('${currency['name']} (${currency['code']})'),
+                                );
+                              }).toList(),
+                              onChanged: (value) {
+                                setState(() {
+                                  _selectedCurrencyId = value;
+                                });
+                              },
+                            ),
+                            const SizedBox(height: 30),
                             SizedBox(
                               width: double.infinity,
                               child: ElevatedButton(
@@ -137,6 +239,7 @@ class _CreateProfileScreenState extends State<CreateProfileScreen> {
     return CustomTextField(
       controller: controller,
       label: label,
+      isRequired: true,
     );
   }
 }

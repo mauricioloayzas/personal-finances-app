@@ -128,58 +128,60 @@ class _LoginScreenState extends State<LoginScreen> {
               ),
               child: Padding(
                 padding: const EdgeInsets.all(24.0),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Image.asset(
-                      'assets/images/logo.png',
-                      width: 150, // Ajusta el tamaño
-                      height: 150,
-                    ),
-                    const SizedBox(height: 30),
-                    CustomTextField(
-                      controller: _emailController,
-                      label: 'Email',
-                      isPassword: false,
-                      enabled: !_isLoading,
-                      isRequired: true,
-                    ),
-                    const SizedBox(height: 16),
-                    CustomTextField(
-                      controller: _passwordController,
-                      label: 'Contraseña',
-                      isPassword: true,
-                      enabled: !_isLoading,
-                      isRequired: true,
-                    ),
-                    const SizedBox(height: 24),
-                    ElevatedButton(
-                      onPressed: _isLoading ? null : _login,
-                      style: ElevatedButton.styleFrom(
-                        minimumSize: const Size(double.infinity, 50),
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Image.asset(
+                        'assets/images/logo.png',
+                        width: 150, // Ajusta el tamaño
+                        height: 150,
                       ),
-                      child: _isLoading
-                          ? const CircularProgressIndicator(color: Colors.white)
-                          : const Text('Iniciar Sesión'),
-                    ),
-                    if (_canCheckBiometrics) ...[
+                      const SizedBox(height: 30),
+                      CustomTextField(
+                        controller: _emailController,
+                        label: 'Email',
+                        isPassword: false,
+                        enabled: !_isLoading,
+                        isRequired: true,
+                      ),
                       const SizedBox(height: 16),
-                      IconButton(
-                        onPressed: _isLoading ? null : _biometricLogin,
-                        icon: const Icon(Icons.fingerprint, size: 40),
-                        color: Theme.of(context).primaryColor,
+                      CustomTextField(
+                        controller: _passwordController,
+                        label: 'Contraseña',
+                        isPassword: true,
+                        enabled: !_isLoading,
+                        isRequired: true,
+                      ),
+                      const SizedBox(height: 24),
+                      ElevatedButton(
+                        onPressed: _isLoading ? null : _login,
+                        style: ElevatedButton.styleFrom(
+                          minimumSize: const Size(double.infinity, 50),
+                        ),
+                        child: _isLoading
+                            ? const CircularProgressIndicator(color: Colors.white)
+                            : const Text('Iniciar Sesión'),
+                      ),
+                      if (_canCheckBiometrics) ...[
+                        const SizedBox(height: 16),
+                        IconButton(
+                          onPressed: _isLoading ? null : _biometricLogin,
+                          icon: const Icon(Icons.fingerprint, size: 40),
+                          color: Theme.of(context).primaryColor,
+                        ),
+                      ],
+                      const SizedBox(height: 16),
+                      TextButton(
+                        onPressed: _isLoading
+                            ? null
+                            : () {
+                                Navigator.pushNamed(context, '/signup');
+                              },
+                        child: const Text('¿No tienes cuenta? Crear una'),
                       ),
                     ],
-                    const SizedBox(height: 16),
-                    TextButton(
-                      onPressed: _isLoading
-                          ? null
-                          : () {
-                              Navigator.pushNamed(context, '/signup');
-                            },
-                      child: const Text('¿No tienes cuenta? Crear una'),
-                    ),
-                  ],
+                  ),
                 ),
               ),
             ),

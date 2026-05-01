@@ -96,6 +96,7 @@ class _ListAccountsScreenState extends State<ListAccountsScreen> {
           }
         },
       ),
+      profileId: _selectedProfile,
       child: _selectedProfile == null
           ? const Center(
               child: Text('Please select a profile to see the accounts.'),

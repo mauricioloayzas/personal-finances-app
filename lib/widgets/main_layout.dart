@@ -4,17 +4,16 @@ import 'package:mifinper/widgets/custom_drawer.dart';
 class MainLayout extends StatelessWidget {
   final Widget child;
   final PreferredSizeWidget? appBar;
+  final String? profileId;
 
-  const MainLayout({super.key, required this.child, this.appBar});
+  const MainLayout({super.key, required this.child, this.appBar, this.profileId});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: appBar,
-      drawer: const CustomDrawer(),
+      drawer: CustomDrawer(profileId: profileId),
       body: child,
-      // Opcional: si quieres un pie de página o barra de navegación inferior
-      // bottomNavigationBar: const CustomBottomNavigationBar(),
     );
   }
 }
