@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:mifinper/services/api_service.dart';
 import 'package:mifinper/widgets/custom_app_bar.dart';
+import 'package:mifinper/widgets/custom_dropdown_selector.dart';
 import 'package:mifinper/widgets/custom_text_field.dart';
 import 'package:mifinper/widgets/main_layout.dart';
 import 'package:mifinper/screens/dashboard_screen.dart';
@@ -131,9 +132,6 @@ class _CreateProfileScreenState extends State<CreateProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
-    const customColor = Color(0xFFFFECB3);
-    const focusColor = Color(0xFFFFD700);
-
     return MainLayout(
       appBar: CustomAppBar(
         onDashboardInformationChanged: (_) {},
@@ -167,54 +165,19 @@ class _CreateProfileScreenState extends State<CreateProfileScreen> {
                             const SizedBox(height: 20),
                             _buildTextField(_emailController, 'Email del Perfil'),
                             const SizedBox(height: 20),
-                            DropdownButtonFormField<String>(
-                              value: _selectedCountryId,
-                              decoration: const InputDecoration(
-                                labelText: 'País *',
-                                labelStyle: TextStyle(color: customColor),
-                                enabledBorder: OutlineInputBorder(
-                                  borderSide: BorderSide(color: customColor, width: 1.0),
-                                ),
-                                focusedBorder: OutlineInputBorder(
-                                  borderSide: BorderSide(color: focusColor, width: 2.0),
-                                ),
-                              ),
-                              items: _countries.map((country) {
-                                return DropdownMenuItem<String>(
-                                  value: country['id'],
-                                  child: Text(country['name']),
-                                );
-                              }).toList(),
-                              onChanged: (value) {
-                                setState(() {
-                                  _selectedCountryId = value;
-                                });
-                              },
+                            CustomDropdownSelector(
+                              label: 'País *',
+                              items: _countries,
+                              selectedId: _selectedCountryId,
+                              onChanged: (value) => setState(() => _selectedCountryId = value),
                             ),
                             const SizedBox(height: 20),
-                            DropdownButtonFormField<String>(
-                              value: _selectedCurrencyId,
-                              decoration: const InputDecoration(
-                                labelText: 'Moneda *',
-                                labelStyle: TextStyle(color: customColor),
-                                enabledBorder: OutlineInputBorder(
-                                  borderSide: BorderSide(color: customColor, width: 1.0),
-                                ),
-                                focusedBorder: OutlineInputBorder(
-                                  borderSide: BorderSide(color: focusColor, width: 2.0),
-                                ),
-                              ),
-                              items: _currencies.map((currency) {
-                                return DropdownMenuItem<String>(
-                                  value: currency['id'],
-                                  child: Text('${currency['name']} (${currency['code']})'),
-                                );
-                              }).toList(),
-                              onChanged: (value) {
-                                setState(() {
-                                  _selectedCurrencyId = value;
-                                });
-                              },
+                            CustomDropdownSelector(
+                              label: 'Moneda *',
+                              items: _currencies,
+                              selectedId: _selectedCurrencyId,
+                              itemLabel: (currency) => '${currency['name']} (${currency['code']})',
+                              onChanged: (value) => setState(() => _selectedCurrencyId = value),
                             ),
                             const SizedBox(height: 30),
                             SizedBox(

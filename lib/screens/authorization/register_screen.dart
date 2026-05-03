@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:mifinper/services/api_service.dart';
 import 'package:mifinper/screens/authorization/confirm_user_screen.dart';
+import 'package:mifinper/widgets/custom_dropdown_selector.dart';
 import 'package:mifinper/widgets/custom_text_field.dart';
 
 class RegisterScreen extends StatefulWidget {
@@ -121,9 +122,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   @override
   Widget build(BuildContext context) {
-    const customColor = Color(0xFFFFECB3);
-    const focusColor = Color(0xFFFFD700);
-
     return Scaffold(
       appBar: AppBar(
         title: const Text('Register'),
@@ -172,85 +170,28 @@ class _RegisterScreenState extends State<RegisterScreen> {
                               isRequired: true,
                             ),
                             const SizedBox(height: 16.0),
-                            DropdownButtonFormField<String>(
-                              value: _selectedCountryId,
-                              decoration: const InputDecoration(
-                                labelText: 'País *',
-                                labelStyle: TextStyle(color: customColor),
-                                enabledBorder: OutlineInputBorder(
-                                  borderSide: BorderSide(color: customColor, width: 1.0),
-                                ),
-                                focusedBorder: OutlineInputBorder(
-                                  borderSide: BorderSide(color: focusColor, width: 2.0),
-                                ),
-                              ),
-                              items: _countries.map((country) {
-                                return DropdownMenuItem<String>(
-                                  value: country['id'],
-                                  child: Text(country['name']),
-                                );
-                              }).toList(),
-                              onChanged: _isLoading
-                                  ? null
-                                  : (value) {
-                                      setState(() {
-                                        _selectedCountryId = value;
-                                      });
-                                    },
+                            CustomDropdownSelector(
+                              label: 'País *',
+                              items: _countries,
+                              selectedId: _selectedCountryId,
+                              enabled: !_isLoading,
+                              onChanged: (value) => setState(() => _selectedCountryId = value),
                             ),
                             const SizedBox(height: 16.0),
-                            DropdownButtonFormField<String>(
-                              value: _selectedTimeZoneId,
-                              decoration: const InputDecoration(
-                                labelText: 'Zona Horaria *',
-                                labelStyle: TextStyle(color: customColor),
-                                enabledBorder: OutlineInputBorder(
-                                  borderSide: BorderSide(color: customColor, width: 1.0),
-                                ),
-                                focusedBorder: OutlineInputBorder(
-                                  borderSide: BorderSide(color: focusColor, width: 2.0),
-                                ),
-                              ),
-                              items: _timeZones.map((timezone) {
-                                return DropdownMenuItem<String>(
-                                  value: timezone['id'],
-                                  child: Text(timezone['name']),
-                                );
-                              }).toList(),
-                              onChanged: _isLoading
-                                  ? null
-                                  : (value) {
-                                      setState(() {
-                                        _selectedTimeZoneId = value;
-                                      });
-                                    },
+                            CustomDropdownSelector(
+                              label: 'Zona Horaria *',
+                              items: _timeZones,
+                              selectedId: _selectedTimeZoneId,
+                              enabled: !_isLoading,
+                              onChanged: (value) => setState(() => _selectedTimeZoneId = value),
                             ),
                             const SizedBox(height: 16.0),
-                            DropdownButtonFormField<String>(
-                              value: _selectedLanguageId,
-                              decoration: const InputDecoration(
-                                labelText: 'Idioma *',
-                                labelStyle: TextStyle(color: customColor),
-                                enabledBorder: OutlineInputBorder(
-                                  borderSide: BorderSide(color: customColor, width: 1.0),
-                                ),
-                                focusedBorder: OutlineInputBorder(
-                                  borderSide: BorderSide(color: focusColor, width: 2.0),
-                                ),
-                              ),
-                              items: _languages.map((language) {
-                                return DropdownMenuItem<String>(
-                                  value: language['id'],
-                                  child: Text(language['name']),
-                                );
-                              }).toList(),
-                              onChanged: _isLoading
-                                  ? null
-                                  : (value) {
-                                      setState(() {
-                                        _selectedLanguageId = value;
-                                      });
-                                    },
+                            CustomDropdownSelector(
+                              label: 'Idioma *',
+                              items: _languages,
+                              selectedId: _selectedLanguageId,
+                              enabled: !_isLoading,
+                              onChanged: (value) => setState(() => _selectedLanguageId = value),
                             ),
                             const SizedBox(height: 32.0),
                             _isLoading

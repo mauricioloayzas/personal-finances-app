@@ -37,23 +37,12 @@ class _DashboardScreenState extends State<DashboardScreen>
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
-    _tabController.addListener(_onTabChanged);
   }
 
   @override
   void dispose() {
-    _tabController.removeListener(_onTabChanged);
     _tabController.dispose();
     super.dispose();
-  }
-
-  void _onTabChanged() {
-    if (_tabController.index == 1 &&
-        _selectedProfile != null &&
-        _summaryMonths.isEmpty &&
-        !_isFetchingSummary) {
-      _loadSummaryMonths(_selectedProfile!);
-    }
   }
 
   Future<void> _loadSummaryMonths(String profileId) async {
@@ -86,13 +75,28 @@ class _DashboardScreenState extends State<DashboardScreen>
     if (_selectedProfile == null) return;
     setState(() => _isPerformingRollover = true);
     try {
-      await _apiService.createGeneralLedgerMonthlyRollover(_selectedProfile!);
-      // Clear the cache so the next daily check re-fetches updated data
+      final now = DateTime.now();
+      final prev = DateTime(now.year, now.month - 1);
+      final year = prev.year.toString();
+      final month = prev.month.toString().padLeft(2, '0');
+
+      final resultData = await _apiService.fetchCloseMonthResult(
+          _selectedProfile!, year, month);
+      final balanceData = await _apiService.fetchCloseMonthBalance(
+          _selectedProfile!, year, month);
+
+      await _apiService.createSummaryMonth(
+        _selectedProfile!,
+        year,
+        month,
+        result: (resultData['result'] as num).toDouble(),
+        balance: (balanceData['result'] as num).toDouble(),
+      );
+
       await _rolloverService.clearCache(_selectedProfile!);
       if (mounted) {
         setState(() {
           _rolloverNeeded = false;
-          // Reset summary so it refreshes when the user opens the tab
           _summaryMonths = [];
         });
         ScaffoldMessenger.of(context).showSnackBar(
@@ -174,9 +178,7 @@ class _DashboardScreenState extends State<DashboardScreen>
           });
           if (profileId != null) {
             _checkRollover(profileId);
-            if (_tabController.index == 1) {
-              _loadSummaryMonths(profileId);
-            }
+            _loadSummaryMonths(profileId);
           }
         }
       },

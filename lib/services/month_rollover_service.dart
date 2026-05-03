@@ -23,16 +23,18 @@ class MonthRolloverService {
     final lastCheck = prefs.getString(lastCheckKey);
 
     if (lastCheck == todayStr) {
-      // Already checked today — use cached data
       final storedJson = prefs.getString(monthsKey);
       if (storedJson != null) {
         final stored = jsonDecode(storedJson) as List<dynamic>;
-        return _isRolloverNeeded(stored);
+        // Only trust the cache when it says "not needed" — if it says "needed",
+        // re-fetch to catch rollovers completed outside this app session.
+        if (!_isRolloverNeeded(stored)) {
+          return false;
+        }
       }
-      return false;
     }
 
-    // First check of the day: fetch from API
+    // Fetch from API (first check of the day, or cache says rollover still needed)
     try {
       final months = await apiService.fetchSummaryMonths(profileId);
       await prefs.setString(lastCheckKey, todayStr);
@@ -52,13 +54,16 @@ class MonthRolloverService {
     await prefs.remove('$_keyMonths$profileId');
   }
 
-  /// Returns `true` when the current month/year is not present in [months].
+  /// Returns `true` when the previous month/year is not present in [months].
   bool _isRolloverNeeded(List<dynamic> months) {
     final now = DateTime.now();
-    return !months.any(
-      (m) =>
-          (m['month'] as num).toInt() == now.month &&
-          (m['year'] as num).toInt() == now.year,
-    );
+    final prev = DateTime(now.year, now.month - 1);
+    final prevMonth = prev.month;
+    final prevYear = prev.year;
+    return !months.any((m) {
+      final mMonth = int.tryParse(m['month'].toString()) ?? 0;
+      final mYear = int.tryParse(m['year'].toString()) ?? 0;
+      return mMonth == prevMonth && mYear == prevYear;
+    });
   }
 }

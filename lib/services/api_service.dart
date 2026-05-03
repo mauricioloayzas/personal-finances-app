@@ -726,6 +726,86 @@ class ApiService {
     }
   }
 
+  Future<Map<String, dynamic>> fetchCloseMonthResult(
+      String profileId, String year, String month) async {
+    final idToken = await _storage.read(key: 'idToken');
+    final apiPFUrl = dotenv.env['API_PF_URL'];
+    final urlEndpoint =
+        '$apiPFUrl/profiles/$profileId/general-ledger-close-month-result';
+
+    final response = await http.post(
+      Uri.parse(urlEndpoint),
+      headers: {
+        'Authorization': 'Bearer $idToken',
+        'Content-Type': 'application/json; charset=UTF-8',
+      },
+      body: json.encode({'year': year, 'month': month}),
+    );
+
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      return jsonDecode(response.body);
+    } else {
+      final errorBody = jsonDecode(response.body);
+      throw Exception(
+          errorBody['message'] ?? 'Failed to fetch close month result');
+    }
+  }
+
+  Future<Map<String, dynamic>> fetchCloseMonthBalance(
+      String profileId, String year, String month) async {
+    final idToken = await _storage.read(key: 'idToken');
+    final apiPFUrl = dotenv.env['API_PF_URL'];
+    final urlEndpoint =
+        '$apiPFUrl/profiles/$profileId/general-ledger-close-month-balance';
+
+    final response = await http.post(
+      Uri.parse(urlEndpoint),
+      headers: {
+        'Authorization': 'Bearer $idToken',
+        'Content-Type': 'application/json; charset=UTF-8',
+      },
+      body: json.encode({'year': year, 'month': month}),
+    );
+
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      return jsonDecode(response.body);
+    } else {
+      final errorBody = jsonDecode(response.body);
+      throw Exception(
+          errorBody['message'] ?? 'Failed to fetch close month balance');
+    }
+  }
+
+  Future<Map<String, dynamic>> createSummaryMonth(
+      String profileId, String year, String month,
+      {required double result, required double balance}) async {
+    final idToken = await _storage.read(key: 'idToken');
+    final apiPFUrl = dotenv.env['API_PF_URL'];
+    final urlEndpoint = '$apiPFUrl/profiles/$profileId/summary-months';
+
+    final response = await http.post(
+      Uri.parse(urlEndpoint),
+      headers: {
+        'Authorization': 'Bearer $idToken',
+        'Content-Type': 'application/json; charset=UTF-8',
+      },
+      body: json.encode({
+        'year': year,
+        'month': month,
+        'result': result,
+        'balance': balance,
+      }),
+    );
+
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      return jsonDecode(response.body);
+    } else {
+      final errorBody = jsonDecode(response.body);
+      throw Exception(
+          errorBody['message'] ?? 'Failed to create summary month');
+    }
+  }
+
   Future<List<dynamic>> fetchSummaryMonths(String profileId, {int? year}) async {
     final idToken = await _storage.read(key: 'idToken');
     final apiPFUrl = dotenv.env['API_PF_URL'];
