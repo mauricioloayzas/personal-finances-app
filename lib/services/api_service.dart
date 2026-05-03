@@ -58,7 +58,11 @@ class ApiService {
 
   Future<void> login(String email, String password) async {
     final loginUrl = '${dotenv.env['API_ORCHESTRATOR_URL']}/auth/login';
-    final payload = {'email': email, 'password': password};
+    final payload = {
+      'email': email,
+      'password': password,
+      'appId': dotenv.env['APLICATION_ID'],
+    };
 
     final response = await http.post(
       Uri.parse(loginUrl),
@@ -242,13 +246,14 @@ class ApiService {
       headers: <String, String>{
         'Content-Type': 'application/json; charset=UTF-8',
       },
-      body: jsonEncode(<String, String>{
+      body: jsonEncode(<String, dynamic>{
         'name': name,
         'email': email,
         'password': password,
         'country_id': countryId,
         'time_zone_id': timeZoneId,
         'language_id': languageId,
+        'appId': dotenv.env['APLICATION_ID'],
       }),
     );
 
